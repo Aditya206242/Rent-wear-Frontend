@@ -7,7 +7,15 @@ import { SubmitButton } from "@/components/auth/SubmitButton";
 
 const initialState: ActionState = {};
 
-export function VerifyOtpForm({ phone, email }: { phone: string; email: string }) {
+export function VerifyOtpForm({
+  phone,
+  email,
+  redirectTo,
+}: {
+  phone: string;
+  email: string;
+  redirectTo: string;
+}) {
   const [state, formAction] = useActionState(verifyOtp, initialState);
   const [resendMessage, setResendMessage] = useState<string | null>(null);
   const [isResending, startResend] = useTransition();
@@ -16,6 +24,7 @@ export function VerifyOtpForm({ phone, email }: { phone: string; email: string }
     <form action={formAction} className="space-y-4" noValidate>
       <input type="hidden" name="phone" value={phone} />
       <input type="hidden" name="email" value={email} />
+      <input type="hidden" name="redirectTo" value={redirectTo} />
 
       <AuthInput
         label="Verification code"

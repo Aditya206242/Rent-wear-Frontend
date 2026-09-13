@@ -20,8 +20,16 @@ type OtpRecord = {
   attempts: number;
 };
 
-const usersByEmail = new Map<string, User>();
-const otpsByPhone = new Map<string, OtpRecord>();
+declare global {
+  var __authStore: { usersByEmail: Map<string, User>; otpsByPhone: Map<string, OtpRecord> } | undefined;
+}
+
+// Next.js dev mode can recompile this module per-route, which would otherwise
+// reset these maps mid-flow (e.g. an OTP issued during sign-up "disappearing"
+// by the time /verify-otp compiles). Stash it on globalThis to survive that.
+const store =
+  globalThis.__authStore ?? (globalThis.__authStore = { usersByEmail: new Map(), otpsByPhone: new Map() });
+const { usersByEmail, otpsByPhone } = store;
 
 const OTP_TTL_MS = 10 * 60 * 1000;
 const OTP_MAX_ATTEMPTS = 5;
@@ -47,6 +55,10 @@ export async function createUnverifiedUser(input: {
 
 export function getUserByEmail(email: string): User | undefined {
   return usersByEmail.get(email);
+}
+
+export function getUserByPhone(phone: string): User | undefined {
+  return [...usersByEmail.values()].find((user) => user.phone === phone);
 }
 
 export function markUserVerified(email: string): void {

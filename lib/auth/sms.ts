@@ -14,7 +14,7 @@ export async function sendOtpSms(phone: string, code: string): Promise<void> {
   const body = new URLSearchParams({
     To: phone,
     From: TWILIO_FROM_NUMBER,
-    Body: `Your Rent-wear verification code is ${code}. It expires in 10 minutes.`,
+    Body: `Your LoopWear verification code is ${code}. It expires in 10 minutes.`,
   });
 
   const response = await fetch(

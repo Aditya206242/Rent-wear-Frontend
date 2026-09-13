@@ -1,14 +1,22 @@
 import { AuthCard } from "@/components/auth/AuthCard";
 import { SignUpForm } from "./SignUpForm";
 
-export default function SignUpPage() {
+type Props = {
+  searchParams: Promise<{ redirectTo?: string }>;
+};
+
+export default async function SignUpPage({ searchParams }: Props) {
+  const { redirectTo } = await searchParams;
+
   return (
     <AuthCard
       heading="Create your account"
-      subheading="Start renting in minutes."
+      subheading=""
       footer={{ text: "Already have an account?", linkText: "Sign in", href: "/sign-in" }}
     >
-      <SignUpForm />
+      <div className="space-y-5">
+        <SignUpForm redirectTo={redirectTo ?? "/dashboard"} />
+      </div>
     </AuthCard>
   );
 }

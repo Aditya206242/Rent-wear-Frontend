@@ -6,6 +6,7 @@ import { signUpSchema, signInSchema, otpSchema } from "./schemas";
 import {
   createUnverifiedUser,
   getUserByEmail,
+  getUserByPhone,
   markUserVerified,
   verifyPassword,
   issueOtp,
@@ -18,6 +19,12 @@ export type ActionState = {
   error?: string;
   fieldErrors?: Record<string, string>;
 };
+
+function safeRedirect(target: FormDataEntryValue | null): string {
+  return typeof target === "string" && target.startsWith("/") && !target.startsWith("//")
+    ? target
+    : "/dashboard";
+}
 
 function fieldErrorsFromZod(error: z.ZodError): Record<string, string> {
   const errors: Record<string, string> = {};
@@ -42,6 +49,7 @@ export async function signUp(_prev: ActionState, formData: FormData): Promise<Ac
   }
 
   const { name, email, phone, password } = parsed.data;
+  const redirectTo = safeRedirect(formData.get("redirectTo"));
   const existing = getUserByEmail(email);
   if (existing?.verified) {
     return { error: "An account with this email already exists." };
@@ -56,7 +64,9 @@ export async function signUp(_prev: ActionState, formData: FormData): Promise<Ac
     return { error: "Could not send verification code. Please try again." };
   }
 
-  redirect(`/verify-otp?phone=${encodeURIComponent(phone)}&email=${encodeURIComponent(email)}`);
+  redirect(
+    `/verify-otp?phone=${encodeURIComponent(phone)}&email=${encodeURIComponent(email)}&redirectTo=${encodeURIComponent(redirectTo)}`,
+  );
 }
 
 export async function verifyOtp(_prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -71,6 +81,7 @@ export async function verifyOtp(_prev: ActionState, formData: FormData): Promise
 
   const { phone, code } = parsed.data;
   const email = formData.get("email");
+  const redirectTo = safeRedirect(formData.get("redirectTo"));
   if (typeof email !== "string") {
     return { error: "Something went wrong. Please sign up again." };
   }
@@ -92,7 +103,7 @@ export async function verifyOtp(_prev: ActionState, formData: FormData): Promise
 
   markUserVerified(email);
   await createSessionCookie({ userId: user.id, email: user.email, name: user.name });
-  redirect("/dashboard");
+  redirect(redirectTo);
 }
 
 export async function resendOtp(phone: string): Promise<{ error?: string }> {
@@ -119,6 +130,7 @@ export async function signIn(_prev: ActionState, formData: FormData): Promise<Ac
   }
 
   const { email, password } = parsed.data;
+  const redirectTo = safeRedirect(formData.get("redirectTo"));
   const user = getUserByEmail(email);
   const genericError = "Invalid email or password.";
 
@@ -127,14 +139,46 @@ export async function signIn(_prev: ActionState, formData: FormData): Promise<Ac
   }
 
   if (!user.verified) {
-    redirect(`/verify-otp?phone=${encodeURIComponent(user.phone)}&email=${encodeURIComponent(user.email)}`);
+    redirect(
+      `/verify-otp?phone=${encodeURIComponent(user.phone)}&email=${encodeURIComponent(user.email)}&redirectTo=${encodeURIComponent(redirectTo)}`,
+    );
   }
 
   await createSessionCookie({ userId: user.id, email: user.email, name: user.name });
-  redirect("/dashboard");
+  redirect(redirectTo);
+}
+
+export async function requestOtpLogin(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const parsed = otpSchema.shape.phone.safeParse(formData.get("phone"));
+  if (!parsed.success) {
+    return { fieldErrors: { phone: parsed.error.issues[0]?.message ?? "Invalid phone number." } };
+  }
+
+  const redirectTo = safeRedirect(formData.get("redirectTo"));
+  const phone = parsed.data;
+  const user = getUserByPhone(phone);
+  if (!user) {
+    return { fieldErrors: { phone: "No account found with that phone number." } };
+  }
+
+  const code = await issueOtp(phone);
+  try {
+    await sendOtpSms(phone, code);
+  } catch {
+    return { error: "Could not send verification code. Please try again." };
+  }
+
+  redirect(
+    `/verify-otp?phone=${encodeURIComponent(phone)}&email=${encodeURIComponent(user.email)}&redirectTo=${encodeURIComponent(redirectTo)}`,
+  );
+}
+
+export async function continueWithGoogle(): Promise<ActionState> {
+  // Frontend stub: no OAuth backend/credentials wired up yet.
+  return { error: "Google sign-in isn't connected yet. Please use mobile OTP or email/password." };
 }
 
 export async function logout(): Promise<void> {
   await clearSessionCookie();
-  redirect("/sign-in");
+  redirect("/dashboard");
 }

@@ -8,11 +8,13 @@ import { SubmitButton } from "@/components/auth/SubmitButton";
 
 const initialState: ActionState = {};
 
-export function SignUpForm() {
+export function SignUpForm({ redirectTo }: { redirectTo: string }) {
   const [state, formAction] = useActionState(signUp, initialState);
 
   return (
     <form action={formAction} className="space-y-4" noValidate>
+      <input type="hidden" name="redirectTo" value={redirectTo} />
+
       <AuthInput
         label="Full name"
         name="name"

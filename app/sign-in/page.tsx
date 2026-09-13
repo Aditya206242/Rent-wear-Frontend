@@ -1,14 +1,20 @@
 import { AuthCard } from "@/components/auth/AuthCard";
-import { SignInForm } from "./SignInForm";
+import { SignInMethods } from "./SignInMethods";
 
-export default function SignInPage() {
+type Props = {
+  searchParams: Promise<{ redirectTo?: string }>;
+};
+
+export default async function SignInPage({ searchParams }: Props) {
+  const { redirectTo } = await searchParams;
+
   return (
     <AuthCard
-      heading="Welcome back"
-      subheading="Sign in to continue."
+      heading="Sign in or create account"
+      subheading=""
       footer={{ text: "Don't have an account?", linkText: "Sign up", href: "/sign-up" }}
     >
-      <SignInForm />
+      <SignInMethods redirectTo={redirectTo ?? "/dashboard"} />
     </AuthCard>
   );
 }

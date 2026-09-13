@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { LoopWearLogo } from "@/components/LoopWearLogo";
 
 type AuthCardProps = {
   heading: string;
@@ -12,12 +13,11 @@ export function AuthCard({ heading, subheading, children, footer }: AuthCardProp
   return (
     <div className="flex min-h-screen items-center justify-center bg-neutral-50 px-4 py-12">
       <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <span className="text-lg font-semibold tracking-tight text-neutral-900">Rent-wear</span>
+        <div className="mb-8 flex justify-center">
+          <LoopWearLogo size="lg" />
         </div>
-
         <div className="rounded-xl border border-neutral-200 bg-white p-8 shadow-sm">
-          <h1 className="text-xl font-semibold text-neutral-900">{heading}</h1>
+          <h1 className="text-lg font-semibold text-neutral-900 flex justify-center">{heading}</h1>
           <p className="mt-1 text-sm text-neutral-500">{subheading}</p>
 
           <div className="mt-6">{children}</div>

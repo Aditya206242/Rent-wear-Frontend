@@ -21,5 +21,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*"],
+  // Dashboard and browsing are public. Reserve this for future protected
+  // actions (e.g. purchase/checkout) that require an authenticated session.
+  matcher: ["/purchase/:path*", "/checkout/:path*"],
 };
