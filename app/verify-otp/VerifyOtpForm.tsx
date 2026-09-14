@@ -9,11 +9,9 @@ const initialState: ActionState = {};
 
 export function VerifyOtpForm({
   phone,
-  email,
   redirectTo,
 }: {
   phone: string;
-  email: string;
   redirectTo: string;
 }) {
   const [state, formAction] = useActionState(verifyOtp, initialState);
@@ -23,7 +21,6 @@ export function VerifyOtpForm({
   return (
     <form action={formAction} className="space-y-4" noValidate>
       <input type="hidden" name="phone" value={phone} />
-      <input type="hidden" name="email" value={email} />
       <input type="hidden" name="redirectTo" value={redirectTo} />
 
       <AuthInput
@@ -35,6 +32,7 @@ export function VerifyOtpForm({
         placeholder="123456"
         required
         error={state.fieldErrors?.code}
+        className="text-center text-xl font-semibold tracking-[0.5em] text-brand-navy caret-brand-gold"
       />
 
       {state.error && (
@@ -55,7 +53,7 @@ export function VerifyOtpForm({
             setResendMessage(result.error ?? "A new code has been sent.");
           })
         }
-        className="w-full text-center text-sm font-medium text-neutral-600 hover:text-neutral-900 disabled:opacity-60"
+        className="w-full text-center text-sm font-semibold text-brand-gold-deep hover:text-brand-navy disabled:opacity-60"
       >
         {isResending ? "Sending…" : "Resend code"}
       </button>

@@ -11,22 +11,25 @@ type AuthCardProps = {
 
 export function AuthCard({ heading, subheading, children, footer }: AuthCardProps) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-neutral-50 px-4 py-12">
+    <div className="flex min-h-screen items-center justify-center bg-brand-cream px-4 py-12">
       <div className="w-full max-w-sm">
         <div className="mb-8 flex justify-center">
           <LoopWearLogo size="lg" />
         </div>
-        <div className="rounded-xl border border-neutral-200 bg-white p-8 shadow-sm">
-          <h1 className="text-lg font-semibold text-neutral-900 flex justify-center">{heading}</h1>
-          <p className="mt-1 text-sm text-neutral-500">{subheading}</p>
+        <div className="overflow-hidden rounded-2xl border border-brand-navy/10 bg-white shadow-[0_20px_50px_-24px_rgba(23,43,77,0.35)]">
+          <div className="h-1.5 w-full bg-gradient-to-r from-brand-navy via-brand-gold to-brand-navy" />
+          <div className="p-8">
+            <h1 className="text-center text-lg font-semibold text-brand-navy">{heading}</h1>
+            {subheading && <p className="mt-1.5 text-center text-sm text-neutral-500">{subheading}</p>}
 
-          <div className="mt-6">{children}</div>
+            <div className="mt-6">{children}</div>
+          </div>
         </div>
 
         {footer && (
           <p className="mt-6 text-center text-sm text-neutral-500">
             {footer.text}{" "}
-            <Link href={footer.href} className="font-medium text-neutral-900 underline-offset-4 hover:underline">
+            <Link href={footer.href} className="font-semibold text-brand-gold-deep underline-offset-4 hover:underline">
               {footer.linkText}
             </Link>
           </p>

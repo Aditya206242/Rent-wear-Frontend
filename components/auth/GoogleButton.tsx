@@ -1,33 +1,69 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
+import Script from "next/script";
 import { continueWithGoogle } from "@/lib/auth/actions";
 
-export function GoogleButton() {
+const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: {
+          initialize: (config: {
+            client_id: string;
+            callback: (response: { credential: string }) => void;
+          }) => void;
+          renderButton: (parent: HTMLElement, options: Record<string, unknown>) => void;
+        };
+      };
+    };
+  }
+}
+
+export function GoogleButton({ redirectTo }: { redirectTo: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [scriptReady, setScriptReady] = useState(false);
+
+  // Google Identity Services owns the actual button element (their branding
+  // terms require it): we hand it a container and a callback that receives
+  // the ID token, then forward that token to the backend ourselves.
+  useEffect(() => {
+    if (!scriptReady || !GOOGLE_CLIENT_ID || !containerRef.current || !window.google) return;
+
+    window.google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: (response) => {
+        startTransition(async () => {
+          const result = await continueWithGoogle(response.credential, redirectTo);
+          setError(result.error ?? null);
+        });
+      },
+    });
+
+    window.google.accounts.id.renderButton(containerRef.current, {
+      type: "standard",
+      theme: "outline",
+      size: "large",
+      text: "continue_with",
+      shape: "pill",
+      width: containerRef.current.offsetWidth || 320,
+    });
+  }, [scriptReady, redirectTo]);
+
+  if (!GOOGLE_CLIENT_ID) return null;
 
   return (
     <div>
-      <button
-        type="button"
-        disabled={isPending}
-        onClick={() =>
-          startTransition(async () => {
-            const result = await continueWithGoogle();
-            setError(result.error ?? null);
-          })
-        }
-        className="flex w-full items-center justify-center gap-2 cursor-pointer rounded-lg border border-neutral-300 px-2 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        <svg viewBox="0 0 18 18" className="h-4 w-4" aria-hidden="true">
-          <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.57 2.7-3.88 2.7-6.62Z" />
-          <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.95v2.33A9 9 0 0 0 9 18Z" />
-          <path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.67 9c0-.59.1-1.17.28-1.7V4.97H.95A9 9 0 0 0 0 9c0 1.45.35 2.83.95 4.03l3-2.33Z" />
-          <path fill="#EA4335" d="M9 3.58c1.32 0 2.51.46 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .95 4.97l3 2.33C4.66 5.17 6.65 3.58 9 3.58Z" />
-        </svg>
-        {isPending ? "Please wait…" : "Continue with Google"}
-      </button>
+      <Script
+        src="https://accounts.google.com/gsi/client"
+        strategy="afterInteractive"
+        onReady={() => setScriptReady(true)}
+      />
+      <div ref={containerRef} className={isPending ? "pointer-events-none opacity-60" : ""} />
       {error && (
         <p role="alert" className="mt-2 text-center text-sm text-red-600">
           {error}

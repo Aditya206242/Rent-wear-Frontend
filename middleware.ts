@@ -1,19 +1,21 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { jwtVerify } from "jose";
 
-export async function middleware(request: NextRequest) {
-  const token = request.cookies.get("session")?.value;
-  const secret = process.env.SESSION_SECRET;
+const SESSION_COOKIE = "loopwear_token";
 
-  const isAuthenticated =
-    !!token &&
-    !!secret &&
-    (await jwtVerify(token, new TextEncoder().encode(secret))
-      .then(() => true)
-      .catch(() => false));
+/**
+ * Fast-path only: bounces requests with no session cookie at all straight to
+ * sign-in. It does NOT verify the token (we no longer self-sign JWTs — the
+ * real backend does, see lib/auth/session.ts) and it does NOT check role.
+ * Real authentication (is this token still valid?) and authorization (is
+ * this user an operator?) happen server-side via getSession()/requireOperator()
+ * in the relevant layouts, which actually ask the backend.
+ */
+export function middleware(request: NextRequest) {
+  const hasToken = !!request.cookies.get(SESSION_COOKIE)?.value;
 
-  if (!isAuthenticated) {
+  if (!hasToken) {
     const signInUrl = new URL("/sign-in", request.url);
+    signInUrl.searchParams.set("redirectTo", request.nextUrl.pathname);
     return NextResponse.redirect(signInUrl);
   }
 
@@ -21,7 +23,22 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Dashboard and browsing are public. Reserve this for future protected
-  // actions (e.g. purchase/checkout) that require an authenticated session.
-  matcher: ["/purchase/:path*", "/checkout/:path*"],
+  // The Concourse (operator console) additionally enforces role via
+  // requireOperator() in app/(console)/layout.tsx — this matcher only
+  // rules out the "not logged in at all" case before that check runs.
+  matcher: [
+    "/account/:path*",
+    "/checkout/:path*",
+    "/overview/:path*",
+    "/operations/:path*",
+    "/inventory/:path*",
+    "/laundry/:path*",
+    "/orders/:path*",
+    "/customers/:path*",
+    "/delivery/:path*",
+    "/payments/:path*",
+    "/analytics/:path*",
+    "/notifications/:path*",
+    "/settings/:path*",
+  ],
 };

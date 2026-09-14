@@ -1,14 +1,107 @@
 @import "tailwindcss";
 
+@theme {
+  /* ---- brand ---- */
+  --color-brand-navy: #172b4d;
+  --color-brand-navy-dark: #0f1d38;
+  --color-brand-gold: #d69a2d;
+  --color-brand-gold-light: #f0c778;
+  /* gold-deep: same hue, darkened until it clears 4.5:1 on cream — the
+     bright gold is for icons/large text/dark backgrounds only, never
+     small text on paper. */
+  --color-brand-gold-deep: #8a5f16;
+  --color-brand-cream: #fdfbf7;
+
+  /* ---- console surfaces & ink ---- */
+  --color-paper: #fdfbf7;
+  --color-paper-raised: #ffffff;
+  --color-ink: #172b4d;
+  --color-ink-muted: #6b6459;
+  --color-rule: rgba(23, 43, 77, 0.12);
+  --color-rule-strong: rgba(23, 43, 77, 0.22);
+
+  /* ---- signal colors ---- */
+  --color-signal-success: #3f8f5f;
+  --color-signal-warning: #b4633a;
+  --color-signal-danger: #b23a34;
+
+  /* ---- lifecycle station colors ---- */
+  --color-stage-available: #4c7a63;
+  --color-stage-reserved: #d69a2d;
+  --color-stage-rented: #172b4d;
+  --color-stage-returned: #4a5c7a;
+  --color-stage-inspection: #b4633a;
+  --color-stage-laundry: #2e7a78;
+  --color-stage-quality: #6b4c7a;
+  --color-stage-ready: #3f8f5f;
+
+  /* ---- type ---- */
+  --font-display: var(--font-fraunces), "Iowan Old Style", serif;
+  --font-ui: var(--font-space-grotesk), "Segoe UI", sans-serif;
+  --font-mono: var(--font-mono-console), "SFMono-Regular", monospace;
+
+  /* ---- radius: sharp, paper-like ---- */
+  --radius-ticket: 3px;
+  --radius-chip: 2px;
+}
+
 html {
   color-scheme: light;
 }
 
 body {
-  background: #fafafa;
+  background: var(--color-brand-cream);
 }
 
 :focus-visible {
-  outline: 2px solid #171717;
+  outline: 2px solid var(--color-brand-gold);
   outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+@keyframes ticker-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes drift {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+@keyframes bar-rise {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

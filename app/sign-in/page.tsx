@@ -14,7 +14,7 @@ export default async function SignInPage({ searchParams }: Props) {
       subheading=""
       footer={{ text: "Don't have an account?", linkText: "Sign up", href: "/sign-up" }}
     >
-      <SignInMethods redirectTo={redirectTo ?? "/dashboard"} />
+      <SignInMethods redirectTo={redirectTo ?? "/discover"} />
     </AuthCard>
   );
 }

@@ -11,15 +11,15 @@ export function SignInMethods({ redirectTo }: { redirectTo: string }) {
 
   return (
     <div className="space-y-5">
-      <GoogleButton />
+      <GoogleButton redirectTo={redirectTo} />
       <AuthDivider text="or" />
 
-      <div className="flex rounded-lg border border-neutral-200  text-sm font-semibold">
+      <div className="flex rounded-lg border border-brand-navy/15 text-sm font-semibold">
         <button
           type="button"
           onClick={() => setMethod("mobile")}
           className={`flex-1 rounded-md py-1.5 cursor-pointer transition-colors ${
-            method === "mobile" ? "bg-neutral-900 text-white" : "text-neutral-600 hover:bg-neutral-50"
+            method === "mobile" ? "bg-brand-navy text-white" : "text-brand-navy hover:bg-brand-cream"
           }`}
         >
           Mobile OTP

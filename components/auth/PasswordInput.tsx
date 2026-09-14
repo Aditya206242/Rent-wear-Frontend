@@ -15,7 +15,7 @@ export function PasswordInput({ label, error, id, className, ...props }: Passwor
 
   return (
     <div>
-      <label htmlFor={inputId} className="block text-sm font-medium text-neutral-700">
+      <label htmlFor={inputId} className="block text-sm font-semibold text-brand-navy">
         {label}
       </label>
       <div className="relative mt-1.5">
@@ -24,10 +24,10 @@ export function PasswordInput({ label, error, id, className, ...props }: Passwor
           type={visible ? "text" : "password"}
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? errorId : undefined}
-          className={`block w-full rounded-lg border px-3.5 py-1.5 pr-11 text-base text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-offset-0 ${
+          className={`block w-full rounded-lg border px-3.5 py-2 pr-11 text-base text-brand-navy placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-offset-0 ${
             error
               ? "border-red-400 focus:ring-red-200"
-              : "border-neutral-300 focus:border-neutral-400 focus:ring-neutral-200"
+              : "border-neutral-300 focus:border-brand-gold focus:ring-brand-gold/25"
           } ${className ?? ""}`}
           {...props}
         />
@@ -36,7 +36,7 @@ export function PasswordInput({ label, error, id, className, ...props }: Passwor
           onClick={() => setVisible((v) => !v)}
           aria-pressed={visible}
           aria-label={visible ? "Hide password" : "Show password"}
-          className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-neutral-400 hover:text-neutral-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-300 rounded-r-lg"
+          className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-neutral-400 hover:text-brand-gold-deep focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold/40 rounded-r-lg"
         >
           {visible ? <EyeOffIcon /> : <EyeIcon />}
         </button>

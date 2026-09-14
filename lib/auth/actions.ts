@@ -3,17 +3,9 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { signUpSchema, signInSchema, otpSchema } from "./schemas";
-import {
-  createUnverifiedUser,
-  getUserByEmail,
-  getUserByPhone,
-  markUserVerified,
-  verifyPassword,
-  issueOtp,
-  consumeOtp,
-} from "./store";
-import { sendOtpSms } from "./sms";
-import { createSessionCookie, clearSessionCookie } from "./session";
+import { createSessionCookie, clearSessionCookie, getToken, type SessionUser } from "./session";
+import { apiFetch } from "@/lib/api/client";
+import { ApiError, fieldErrorsFrom } from "@/lib/api/errors";
 
 export type ActionState = {
   error?: string;
@@ -21,9 +13,7 @@ export type ActionState = {
 };
 
 function safeRedirect(target: FormDataEntryValue | null): string {
-  return typeof target === "string" && target.startsWith("/") && !target.startsWith("//")
-    ? target
-    : "/dashboard";
+  return typeof target === "string" && target.startsWith("/") && !target.startsWith("//") ? target : "/discover";
 }
 
 function fieldErrorsFromZod(error: z.ZodError): Record<string, string> {
@@ -33,6 +23,18 @@ function fieldErrorsFromZod(error: z.ZodError): Record<string, string> {
     if (typeof key === "string" && !errors[key]) errors[key] = issue.message;
   }
   return errors;
+}
+
+/** Every action funnels backend failures through this so error handling stays uniform. */
+function actionErrorFrom(error: unknown): ActionState {
+  if (error instanceof ApiError) {
+    if (error.code === "validation_error") {
+      const fieldErrors = fieldErrorsFrom(error);
+      if (Object.keys(fieldErrors).length > 0) return { fieldErrors };
+    }
+    return { error: error.message };
+  }
+  return { error: "Something went wrong. Please try again." };
 }
 
 export async function signUp(_prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -50,23 +52,14 @@ export async function signUp(_prev: ActionState, formData: FormData): Promise<Ac
 
   const { name, email, phone, password } = parsed.data;
   const redirectTo = safeRedirect(formData.get("redirectTo"));
-  const existing = getUserByEmail(email);
-  if (existing?.verified) {
-    return { error: "An account with this email already exists." };
-  }
 
-  await createUnverifiedUser({ name, email, phone, password });
-
-  const code = await issueOtp(phone);
   try {
-    await sendOtpSms(phone, code);
-  } catch {
-    return { error: "Could not send verification code. Please try again." };
+    await apiFetch<{ userId: string }>("/auth/sign-up", { method: "POST", body: { name, email, phone, password } });
+  } catch (error) {
+    return actionErrorFrom(error);
   }
 
-  redirect(
-    `/verify-otp?phone=${encodeURIComponent(phone)}&email=${encodeURIComponent(email)}&redirectTo=${encodeURIComponent(redirectTo)}`,
-  );
+  redirect(`/verify-otp?phone=${encodeURIComponent(phone)}&redirectTo=${encodeURIComponent(redirectTo)}`);
 }
 
 export async function verifyOtp(_prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -80,29 +73,20 @@ export async function verifyOtp(_prev: ActionState, formData: FormData): Promise
   }
 
   const { phone, code } = parsed.data;
-  const email = formData.get("email");
   const redirectTo = safeRedirect(formData.get("redirectTo"));
-  if (typeof email !== "string") {
-    return { error: "Something went wrong. Please sign up again." };
+
+  let token: string;
+  try {
+    const result = await apiFetch<{ token: string; user: SessionUser }>("/auth/verify-otp", {
+      method: "POST",
+      body: { phone, code },
+    });
+    token = result.token;
+  } catch (error) {
+    return actionErrorFrom(error);
   }
 
-  const result = await consumeOtp(phone, code);
-  if (!result.ok) {
-    const messages = {
-      expired: "This code has expired. Request a new one.",
-      invalid: "That code is incorrect.",
-      too_many_attempts: "Too many incorrect attempts. Request a new code.",
-    } as const;
-    return { error: messages[result.reason] };
-  }
-
-  const user = getUserByEmail(email);
-  if (!user) {
-    return { error: "Something went wrong. Please sign up again." };
-  }
-
-  markUserVerified(email);
-  await createSessionCookie({ userId: user.id, email: user.email, name: user.name });
+  await createSessionCookie(token);
   redirect(redirectTo);
 }
 
@@ -110,11 +94,10 @@ export async function resendOtp(phone: string): Promise<{ error?: string }> {
   const parsed = otpSchema.shape.phone.safeParse(phone);
   if (!parsed.success) return { error: "Invalid phone number." };
 
-  const code = await issueOtp(parsed.data);
   try {
-    await sendOtpSms(parsed.data, code);
-  } catch {
-    return { error: "Could not send verification code. Please try again." };
+    await apiFetch<void>("/auth/resend-otp", { method: "POST", body: { phone: parsed.data } });
+  } catch (error) {
+    return actionErrorFrom(error);
   }
   return {};
 }
@@ -131,20 +114,19 @@ export async function signIn(_prev: ActionState, formData: FormData): Promise<Ac
 
   const { email, password } = parsed.data;
   const redirectTo = safeRedirect(formData.get("redirectTo"));
-  const user = getUserByEmail(email);
-  const genericError = "Invalid email or password.";
 
-  if (!user || !(await verifyPassword(user, password))) {
-    return { error: genericError };
+  let token: string;
+  try {
+    const result = await apiFetch<{ token: string; user: SessionUser }>("/auth/sign-in", {
+      method: "POST",
+      body: { email, password },
+    });
+    token = result.token;
+  } catch (error) {
+    return actionErrorFrom(error);
   }
 
-  if (!user.verified) {
-    redirect(
-      `/verify-otp?phone=${encodeURIComponent(user.phone)}&email=${encodeURIComponent(user.email)}&redirectTo=${encodeURIComponent(redirectTo)}`,
-    );
-  }
-
-  await createSessionCookie({ userId: user.id, email: user.email, name: user.name });
+  await createSessionCookie(token);
   redirect(redirectTo);
 }
 
@@ -156,29 +138,38 @@ export async function requestOtpLogin(_prev: ActionState, formData: FormData): P
 
   const redirectTo = safeRedirect(formData.get("redirectTo"));
   const phone = parsed.data;
-  const user = getUserByPhone(phone);
-  if (!user) {
-    return { fieldErrors: { phone: "No account found with that phone number." } };
-  }
 
-  const code = await issueOtp(phone);
   try {
-    await sendOtpSms(phone, code);
-  } catch {
-    return { error: "Could not send verification code. Please try again." };
+    await apiFetch<void>("/auth/request-otp-login", { method: "POST", body: { phone } });
+  } catch (error) {
+    return actionErrorFrom(error);
   }
 
-  redirect(
-    `/verify-otp?phone=${encodeURIComponent(phone)}&email=${encodeURIComponent(user.email)}&redirectTo=${encodeURIComponent(redirectTo)}`,
-  );
+  redirect(`/verify-otp?phone=${encodeURIComponent(phone)}&redirectTo=${encodeURIComponent(redirectTo)}`);
 }
 
-export async function continueWithGoogle(): Promise<ActionState> {
-  // Frontend stub: no OAuth backend/credentials wired up yet.
-  return { error: "Google sign-in isn't connected yet. Please use mobile OTP or email/password." };
+export async function continueWithGoogle(idToken: string, redirectTo: string): Promise<ActionState> {
+  let token: string;
+  try {
+    const result = await apiFetch<{ token: string; user: SessionUser }>("/auth/google", {
+      method: "POST",
+      body: { idToken },
+    });
+    token = result.token;
+  } catch (error) {
+    return actionErrorFrom(error);
+  }
+
+  await createSessionCookie(token);
+  redirect(safeRedirect(redirectTo));
 }
 
 export async function logout(): Promise<void> {
+  const token = await getToken();
+  if (token) {
+    // Best-effort server-side revocation — proceed with local logout either way.
+    await apiFetch<void>("/auth/logout", { method: "POST", token }).catch(() => {});
+  }
   await clearSessionCookie();
-  redirect("/dashboard");
+  redirect("/discover");
 }

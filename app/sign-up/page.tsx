@@ -15,7 +15,7 @@ export default async function SignUpPage({ searchParams }: Props) {
       footer={{ text: "Already have an account?", linkText: "Sign in", href: "/sign-in" }}
     >
       <div className="space-y-5">
-        <SignUpForm redirectTo={redirectTo ?? "/dashboard"} />
+        <SignUpForm redirectTo={redirectTo ?? "/discover"} />
       </div>
     </AuthCard>
   );

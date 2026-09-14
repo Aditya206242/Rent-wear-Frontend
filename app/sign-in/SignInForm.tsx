@@ -34,7 +34,7 @@ export function SignInForm({ redirectTo }: { redirectTo: string }) {
           error={state.fieldErrors?.password}
         />
         <div className="mt-1.5 text-right">
-          <Link href="/forgot-password" className="text-sm font-medium text-neutral-600 hover:text-neutral-900">
+          <Link href="/forgot-password" className="text-sm font-medium text-brand-navy/70 hover:text-brand-gold-deep">
             Forgot password?
           </Link>
         </div>

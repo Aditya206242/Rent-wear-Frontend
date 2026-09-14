@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { signUp, type ActionState } from "@/lib/auth/actions";
 import { AuthInput } from "@/components/auth/AuthInput";
+import { PhoneInput } from "@/components/auth/PhoneInput";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 import { SubmitButton } from "@/components/auth/SubmitButton";
 
@@ -30,12 +31,9 @@ export function SignUpForm({ redirectTo }: { redirectTo: string }) {
         required
         error={state.fieldErrors?.email}
       />
-      <AuthInput
+      <PhoneInput
         label="Phone number"
         name="phone"
-        type="tel"
-        autoComplete="tel"
-        placeholder="+14155550100"
         required
         error={state.fieldErrors?.phone}
       />

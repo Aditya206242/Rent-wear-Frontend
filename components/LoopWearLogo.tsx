@@ -28,10 +28,10 @@ export function LoopWearLogo({ size = "md", showTagline = true, className }: Loo
 
       <span className="flex flex-col leading-none">
        <span
-  className={`font-['Montserrat'] font-extrabold tracking-[-0.04em] leading-none ${s.word}`}
+  className={`font-extrabold tracking-[-0.04em] leading-none ${s.word}`}
 >
-  <span className="text-[#172B4D]">Loop</span>
-  <span className="text-[#D69A2D]">Wear</span>
+  <span className="text-[#172B4D]">Every</span>
+  <span className="text-[#D69A2D]">Occasion</span>
 </span>
         {showTagline && (
           <span className={`font-medium uppercase tracking-[0.18em] text-neutral-500 ${s.tagline}`}>
