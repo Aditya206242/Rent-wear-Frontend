@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { GarmentSwatch } from "@/components/shop/GarmentSwatch";
+import { PaymentPanel } from "@/components/shop/payment/PaymentPanel";
 import { fetchCartAction, type ApiCartItem } from "@/lib/shop/cart-actions";
 import { formatMoney } from "@/lib/shop/format";
 import { requireUser } from "@/lib/auth/session";
@@ -86,17 +87,12 @@ export default async function CheckoutPage() {
             </div>
           </dl>
 
-          <div className="border-t border-brand-navy/10 px-6 py-5">
-            <button
-              type="button"
-              disabled
-              title="Payment isn't wired up yet"
-              className="w-full cursor-not-allowed bg-brand-navy py-3 font-ui text-sm font-semibold text-white opacity-40"
-            >
-              Place order
-            </button>
-            <p className="mt-2 text-center font-ui text-xs text-brand-navy/45">Payment isn&apos;t connected yet — this is an order preview.</p>
-          </div>
+          <PaymentPanel
+            disabled={items.length === 0}
+            dueNow={dueNow}
+            currency={currency}
+            customer={{ name: user.name, email: user.email, phone: user.phone }}
+          />
         </div>
       )}
     </div>

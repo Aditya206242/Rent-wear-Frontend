@@ -36,8 +36,16 @@ export async function fetchCartAction(): Promise<{ items: ApiCartItem[] }> {
 export async function addCartItemAction(input: AddCartLineInput): Promise<{ items: ApiCartItem[] } | { error: string }> {
   const token = await getToken();
   if (!token) return { error: "Sign in to add items to your bag." };
+  // The backend's cart body is keyed by `productId` (see
+  // BACKEND_API_SPEC.md) — `garmentId` is this app's own name for the same
+  // value, so translate it at this boundary rather than downstream.
+  const { garmentId, ...rest } = input;
   try {
-    return await apiFetch<{ items: ApiCartItem[] }>("/cart/items", { method: "POST", token, body: input });
+    return await apiFetch<{ items: ApiCartItem[] }>("/cart/items", {
+      method: "POST",
+      token,
+      body: { productId: garmentId, ...rest },
+    });
   } catch (error) {
     return { error: error instanceof ApiError ? error.message : "Couldn't add that to your bag." };
   }

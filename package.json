@@ -10,6 +10,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@stripe/react-stripe-js": "^6.10.0",
+    "@stripe/stripe-js": "^9.16.0",
     "bcryptjs": "2.4.3",
     "jose": "5.9.6",
     "libphonenumber-js": "^1.13.13",
