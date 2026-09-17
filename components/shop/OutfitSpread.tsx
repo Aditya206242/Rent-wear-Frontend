@@ -29,10 +29,10 @@ export function OutfitSpread({ outfit, garments }: { outfit: Outfit; garments: G
   }
 
   return (
-    <article className="border border-brand-navy/12 bg-white">
+    <article className="overflow-hidden rounded-xl border border-brand-navy/12 bg-white">
       <div className="flex items-center justify-between border-b border-brand-navy/10 px-5 py-3">
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-wide text-brand-gold-deep">The Look · {outfit.occasion}</p>
+          <p className="font-mono text-[10px] uppercase tracking-wide text-brand-cyan-deep">The Look · {outfit.occasion}</p>
           <h3 className="font-display text-xl font-medium text-brand-navy">{outfit.name}</h3>
         </div>
         <div className="text-right">
@@ -45,7 +45,7 @@ export function OutfitSpread({ outfit, garments }: { outfit: Outfit; garments: G
         {garments.map((g, i) => (
           <div key={g.id} className="relative flex flex-1 items-stretch">
             <Link href={`/product/${g.id}`} className="relative block aspect-square w-full min-w-24 bg-white">
-              <GarmentSwatch colorHex={g.colorHex} name={g.name} view="front" />
+              <GarmentSwatch colorHex={g.colorHex} name={g.name} view="front" imageUrl={g.imageUrls?.front} />
               <span className="absolute bottom-1.5 left-1.5 right-1.5 truncate bg-white/85 px-1.5 py-0.5 font-ui text-[10px] text-brand-navy">
                 {g.name}
               </span>
@@ -69,7 +69,7 @@ export function OutfitSpread({ outfit, garments }: { outfit: Outfit; garments: G
         <button
           type="button"
           onClick={addLook}
-          className="flex items-center gap-1.5 bg-brand-gold px-3.5 py-2 font-ui text-xs font-semibold text-brand-navy-dark transition-colors hover:bg-brand-gold-light"
+          className="flex items-center gap-1.5 rounded-lg bg-brand-cyan px-3.5 py-2 font-ui text-xs font-semibold text-brand-navy-dark transition-colors hover:bg-brand-cyan-light"
         >
           <ShoppingBag size={14} strokeWidth={1.75} />
           Rent the complete look

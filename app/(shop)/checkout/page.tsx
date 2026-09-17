@@ -25,25 +25,25 @@ export default async function CheckoutPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10 md:px-0">
-      <p className="font-mono text-xs uppercase tracking-wide text-brand-gold-deep">Signed in as {user.name}</p>
+      <p className="font-mono text-xs uppercase tracking-wide text-brand-cyan-deep">Signed in as {user.name}</p>
       <h1 className="mt-1 font-display text-3xl font-medium text-brand-navy">Checkout</h1>
 
       {items.length === 0 ? (
-        <div className="mt-10 border border-brand-navy/12 bg-white px-6 py-14 text-center">
+        <div className="mt-10 rounded-xl border border-brand-navy/12 bg-white px-6 py-14 text-center">
           <p className="font-ui text-sm text-brand-navy/55">Your bag is empty.</p>
           <Link
             href="/discover"
-            className="mt-4 inline-block bg-brand-navy px-4 py-2 font-ui text-sm font-semibold text-white hover:bg-brand-navy-dark"
+            className="mt-4 inline-block rounded-lg bg-brand-navy px-5 py-2.5 font-ui text-sm font-semibold text-white transition-colors hover:bg-brand-navy-dark"
           >
             Continue browsing
           </Link>
         </div>
       ) : (
-        <div className="mt-8 border border-brand-navy/12 bg-white">
+        <div className="mt-8 overflow-hidden rounded-xl border border-brand-navy/12 bg-white">
           <ul className="divide-y divide-brand-navy/10">
             {items.map((item) => (
               <li key={`${item.productId}-${item.mode}`} className="flex gap-4 px-6 py-4">
-                <div className="h-20 w-14 shrink-0">
+                <div className="h-20 w-14 shrink-0 overflow-hidden rounded-lg">
                   <GarmentSwatch colorHex="#172b4d" name={lineName(item)} />
                 </div>
                 <div className="min-w-0 flex-1">

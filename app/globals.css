@@ -12,6 +12,15 @@
   --color-brand-gold-deep: #8a5f16;
   --color-brand-cream: #fdfbf7;
 
+  /* ---- storefront accent (customer shop only — console keeps gold) ----
+     Cyan lifted from the LoopWear mark, paired with the same navy. Bright
+     cyan is for icons/large text/dark backgrounds only; cyan-deep is
+     darkened until it clears 4.5:1 on cream, same rule as gold-deep. */
+  --color-brand-cyan: #22d3ee;
+  --color-brand-cyan-light: #a6f0fb;
+  --color-brand-cyan-deep: #0b6e82;
+  --color-brand-surface: #eef1f5;
+
   /* ---- console surfaces & ink ---- */
   --color-paper: #fdfbf7;
   --color-paper-raised: #ffffff;
@@ -56,6 +65,23 @@ body {
 :focus-visible {
   outline: 2px solid var(--color-brand-gold);
   outline-offset: 2px;
+}
+
+input:focus,
+input:focus-visible,
+textarea:focus,
+textarea:focus-visible,
+select:focus,
+select:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Keep the compact shop search from receiving the global gold focus outline. */
+.shop-search-input:focus,
+.shop-search-input:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -103,5 +129,27 @@ body {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes float-y {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-14px);
+  }
+}
+
+@keyframes glow-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.08);
   }
 }

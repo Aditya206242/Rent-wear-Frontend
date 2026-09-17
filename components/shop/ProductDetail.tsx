@@ -16,6 +16,7 @@ import type { Garment, RentOrBuy } from "@/lib/shop/types";
 export function ProductDetail({ garment, similar }: { garment: Garment; similar: Garment[] }) {
   const [mode, setMode] = useState<RentOrBuy>("rent");
   const [size, setSize] = useState<string | null>(garment.sizes.find((s) => s.available)?.size ?? null);
+  const [startDate, setStartDate] = useState("");
   const [added, setAdded] = useState(false);
   const { addLine, toggleWishlist, isWishlisted } = useShopCart();
   const wishlisted = isWishlisted(garment.id);
@@ -26,6 +27,7 @@ export function ProductDetail({ garment, similar }: { garment: Garment; similar:
       garmentId: garment.id,
       mode,
       size,
+      startDate: mode === "rent" ? startDate || undefined : undefined,
       product: { id: garment.id, name: garment.name, brand: garment.brand, colorHex: garment.colorHex },
       currency: garment.currency,
       rentPrice: garment.rentPrice,
@@ -39,7 +41,7 @@ export function ProductDetail({ garment, similar }: { garment: Garment; similar:
   return (
     <div>
       <div className="grid grid-cols-1 gap-8 px-4 py-8 md:px-10 lg:grid-cols-2 lg:gap-12">
-        <ImageFilmstrip colorHex={garment.colorHex} name={garment.name} views={garment.views} />
+        <ImageFilmstrip colorHex={garment.colorHex} name={garment.name} views={garment.views} imageUrls={garment.imageUrls} />
 
         <div className="max-w-lg">
           <div className="flex items-start justify-between gap-3">
@@ -55,14 +57,14 @@ export function ProductDetail({ garment, similar }: { garment: Garment; similar:
               onClick={() => toggleWishlist(garment.id)}
               aria-pressed={wishlisted}
               aria-label={wishlisted ? "Remove from wishlist" : "Save to wishlist"}
-              className="flex h-9 w-9 shrink-0 items-center justify-center border border-brand-navy/15 text-brand-navy/60 hover:text-brand-gold-deep"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-brand-navy/15 text-brand-navy/60 hover:text-brand-cyan-deep"
             >
-              <Heart size={16} strokeWidth={1.75} fill={wishlisted ? "var(--color-brand-gold-deep)" : "none"} />
+              <Heart size={16} strokeWidth={1.75} fill={wishlisted ? "var(--color-brand-cyan-deep)" : "none"} />
             </button>
           </div>
 
           <div className="mt-2 flex items-center gap-1.5 font-ui text-sm text-brand-navy/60">
-            <Star size={14} fill="var(--color-brand-gold)" strokeWidth={0} />
+            <Star size={14} fill="var(--color-brand-cyan)" strokeWidth={0} />
             {garment.rating} <span className="text-brand-navy/40">({garment.reviewCount} reviews)</span>
           </div>
 
@@ -82,20 +84,24 @@ export function ProductDetail({ garment, similar }: { garment: Garment; similar:
             </div>
           </div>
 
-          <div className="mt-6">
-            <AvailabilityPicker
-              status={garment.availability}
-              rentDays={garment.rentDays}
-              deliveryDays={garment.deliveryDays}
-              availableFrom={garment.availableFrom}
-            />
-          </div>
+          {mode === "rent" && (
+            <div className="mt-6">
+              <AvailabilityPicker
+                status={garment.availability}
+                rentDays={garment.rentDays}
+                deliveryDays={garment.deliveryDays}
+                availableFrom={garment.availableFrom}
+                value={startDate}
+                onChange={setStartDate}
+              />
+            </div>
+          )}
 
           <button
             type="button"
             onClick={handleAdd}
             disabled={!size}
-            className="mt-6 flex w-full items-center justify-center gap-2 bg-brand-navy py-3.5 font-ui text-sm font-semibold text-white transition-colors hover:bg-brand-navy-dark disabled:cursor-not-allowed disabled:opacity-40"
+            className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-brand-navy py-3.5 font-ui text-sm font-semibold text-white transition-colors hover:bg-brand-navy-dark disabled:cursor-not-allowed disabled:opacity-40"
           >
             <ShoppingBag size={16} strokeWidth={1.75} />
             {added ? "Added to bag" : mode === "rent" ? "Add rental to bag" : "Add to bag"}
@@ -138,12 +144,12 @@ export function ProductDetail({ garment, similar }: { garment: Garment; similar:
 
       {similar.length > 0 && (
         <div className="border-t border-brand-navy/10 px-4 py-10 md:px-10">
-          <p className="font-ui text-xs font-semibold uppercase tracking-wide text-brand-navy/50">Looks similar, worth a look</p>
+          <p className="font-ui text-xs font-semibold uppercase tracking-wide text-brand-navy/50">You might also like</p>
           <div className="mt-4 flex gap-4 overflow-x-auto pb-2">
             {similar.map((g) => (
               <Link key={g.id} href={`/product/${g.id}`} className="w-40 shrink-0">
-                <div className="aspect-[3/4]">
-                  <GarmentSwatch colorHex={g.colorHex} name={g.name} />
+                <div className="aspect-[3/4] overflow-hidden rounded-lg">
+                  <GarmentSwatch colorHex={g.colorHex} name={g.name} imageUrl={g.imageUrls?.front} />
                 </div>
                 <p className="mt-2 font-ui text-sm font-medium text-brand-navy">{g.name}</p>
                 <p className="font-mono text-xs text-brand-navy/55">{formatMoney(g.rentPrice, g.currency)} / {g.rentDays}d</p>

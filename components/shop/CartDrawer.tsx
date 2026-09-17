@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { X, Trash2 } from "lucide-react";
+import { X, Trash2, AlertCircle } from "lucide-react";
 import { GarmentSwatch } from "./GarmentSwatch";
 import { useShopCart } from "@/lib/shop/cart-context";
 import { formatMoney } from "@/lib/shop/format";
@@ -16,7 +16,7 @@ function lineColorHex(line: CartLine) {
 }
 
 export function CartDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { lines, removeLine, isAuthenticated, requireAuth } = useShopCart();
+  const { lines, removeLine, isAuthenticated, requireAuth, cartError, dismissCartError } = useShopCart();
   const router = useRouter();
   const closeRef = useRef<HTMLButtonElement>(null);
 
@@ -69,17 +69,27 @@ export function CartDrawer({ open, onClose }: { open: boolean; onClose: () => vo
         </div>
 
         <div className="flex-1 overflow-y-auto">
+          {cartError && (
+            <div role="alert" className="mx-6 mt-4 flex items-start gap-2 rounded-lg border border-signal-danger/30 bg-signal-danger/8 px-3.5 py-3">
+              <AlertCircle size={15} strokeWidth={1.75} className="mt-0.5 shrink-0 text-signal-danger" />
+              <p className="flex-1 font-ui text-xs text-signal-danger">{cartError}</p>
+              <button type="button" onClick={dismissCartError} aria-label="Dismiss" className="shrink-0 text-signal-danger/60 hover:text-signal-danger">
+                <X size={14} strokeWidth={1.75} />
+              </button>
+            </div>
+          )}
+
           {lines.length === 0 && (
             <p className="px-6 py-14 text-center font-ui text-sm text-brand-navy/50">Your bag is empty — add a rental or a piece to own.</p>
           )}
 
           {rentals.length > 0 && (
             <section className="border-b border-brand-navy/10 px-6 py-5">
-              <p className="font-mono text-[10px] uppercase tracking-wide text-brand-gold-deep">Rentals</p>
+              <p className="font-mono text-[10px] uppercase tracking-wide text-brand-cyan-deep">Rentals</p>
               <ul className="mt-3 space-y-3">
                 {rentals.map((line) => (
                   <li key={`${line.garmentId}-rent`} className="flex gap-3">
-                    <div className="h-16 w-12 shrink-0">
+                    <div className="h-16 w-12 shrink-0 overflow-hidden rounded-lg">
                       <GarmentSwatch colorHex={lineColorHex(line)} name={lineName(line)} />
                     </div>
                     <div className="min-w-0 flex-1">
@@ -112,7 +122,7 @@ export function CartDrawer({ open, onClose }: { open: boolean; onClose: () => vo
               <ul className="mt-3 space-y-3">
                 {purchases.map((line) => (
                   <li key={`${line.garmentId}-buy`} className="flex gap-3">
-                    <div className="h-16 w-12 shrink-0">
+                    <div className="h-16 w-12 shrink-0 overflow-hidden rounded-lg">
                       <GarmentSwatch colorHex={lineColorHex(line)} name={lineName(line)} />
                     </div>
                     <div className="min-w-0 flex-1">
@@ -166,7 +176,7 @@ export function CartDrawer({ open, onClose }: { open: boolean; onClose: () => vo
             <button
               type="button"
               onClick={handleCheckout}
-              className="mt-4 w-full bg-brand-navy py-3 font-ui text-sm font-semibold text-white hover:bg-brand-navy-dark"
+              className="mt-4 w-full rounded-lg bg-brand-navy py-3 font-ui text-sm font-semibold text-white transition-colors hover:bg-brand-navy-dark"
             >
               Checkout
             </button>

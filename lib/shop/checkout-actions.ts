@@ -3,6 +3,9 @@
 import { getToken } from "@/lib/auth/session";
 import { apiFetch } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/errors";
+import type { DeliveryDetails } from "./types";
+
+export type { DeliveryDetails };
 
 /**
  * Thin server-side proxies to the real backend's checkout/payments endpoints
@@ -52,7 +55,7 @@ export type CheckoutResult =
  * `idempotencyKey` must be generated once per checkout attempt on the
  * client and reused across retries — see PaymentPanel.
  */
-export async function createCheckoutAction(idempotencyKey: string): Promise<CheckoutResult> {
+export async function createCheckoutAction(idempotencyKey: string, delivery: DeliveryDetails): Promise<CheckoutResult> {
   const token = await getToken();
   if (!token) return { ok: false, error: "Please sign in to place an order." };
 
@@ -60,7 +63,7 @@ export async function createCheckoutAction(idempotencyKey: string): Promise<Chec
     const data = await apiFetch<{
       order: ApiCheckoutOrder;
       payment: ApiRazorpayPayment | ApiStripePayment | ApiPlainPayment;
-    }>("/checkout", { method: "POST", token, idempotencyKey, body: {} });
+    }>("/checkout", { method: "POST", token, idempotencyKey, body: { delivery } });
 
     const { payment } = data;
     if ("razorpayOrderId" in payment) return { ok: true, order: data.order, gateway: "razorpay", payment };

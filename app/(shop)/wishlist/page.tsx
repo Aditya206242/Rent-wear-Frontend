@@ -15,7 +15,7 @@ export default async function WishlistPage() {
   return (
     <div>
       <div className="border-b border-brand-navy/10 px-4 pt-8 pb-6 md:px-10">
-        <p className="font-mono text-xs uppercase tracking-wide text-brand-gold-deep">Saved</p>
+        <p className="font-mono text-xs uppercase tracking-wide text-brand-cyan-deep">Saved</p>
         <h1 className="mt-1 font-display text-3xl font-medium text-brand-navy">Your wishlist</h1>
       </div>
 
@@ -24,11 +24,9 @@ export default async function WishlistPage() {
           Nothing saved yet — tap the heart on any garment while browsing.
         </p>
       ) : (
-        <div className="grid grid-cols-1 gap-px bg-brand-navy/10 p-4 sm:grid-cols-2 md:p-10 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 md:p-10 lg:grid-cols-4">
           {saved.map((g) => (
-            <div key={g.id} className="bg-brand-cream">
-              <ProductTicket garment={g} />
-            </div>
+            <ProductTicket key={g.id} garment={g} />
           ))}
         </div>
       )}

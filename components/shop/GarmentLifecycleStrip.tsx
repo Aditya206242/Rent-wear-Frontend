@@ -23,10 +23,10 @@ export function GarmentLifecycleStrip() {
             <div key={stage.label} className="flex flex-col items-start gap-2">
               <span
                 className={`flex h-9 w-9 items-center justify-center rounded-full border-[1.5px] ${
-                  isCurrent ? "border-brand-gold bg-brand-gold/10" : "border-brand-navy/20"
+                  isCurrent ? "border-brand-cyan bg-brand-cyan/10" : "border-brand-navy/20"
                 }`}
               >
-                <Icon size={16} strokeWidth={1.5} className={isCurrent ? "text-brand-gold-deep" : "text-brand-navy/50"} />
+                <Icon size={16} strokeWidth={1.5} className={isCurrent ? "text-brand-cyan-deep" : "text-brand-navy/50"} />
               </span>
               <div>
                 <p className={`font-ui text-xs font-semibold uppercase tracking-wide ${isCurrent ? "text-brand-navy" : "text-brand-navy/50"}`}>

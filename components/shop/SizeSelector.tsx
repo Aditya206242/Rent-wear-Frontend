@@ -20,7 +20,7 @@ export function SizeSelector({
           disabled={!s.available}
           onClick={() => s.available && onSelect(s.size)}
           title={s.available ? undefined : `${s.size} — currently unavailable`}
-          className={`relative min-w-9 border px-2.5 py-1.5 font-mono text-xs font-medium transition-colors ${
+          className={`relative min-w-9 rounded-lg border px-2.5 py-1.5 font-mono text-xs font-medium transition-colors ${
             !s.available
               ? "cursor-not-allowed border-brand-navy/10 text-brand-navy/25"
               : selected === s.size

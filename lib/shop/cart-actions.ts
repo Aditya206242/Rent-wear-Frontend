@@ -38,13 +38,16 @@ export async function addCartItemAction(input: AddCartLineInput): Promise<{ item
   if (!token) return { error: "Sign in to add items to your bag." };
   // The backend's cart body is keyed by `productId` (see
   // BACKEND_API_SPEC.md) — `garmentId` is this app's own name for the same
-  // value, so translate it at this boundary rather than downstream.
-  const { garmentId, ...rest } = input;
+  // value, so translate it at this boundary rather than downstream. Callers
+  // (cart-context's addLine) pass a full CartLine, which also carries
+  // display-only fields (product, currency, rentPrice, deposit, buyPrice)
+  // the backend doesn't expect — send only what /cart/items documents,
+  // rather than spreading the rest of the object into the body.
   try {
     return await apiFetch<{ items: ApiCartItem[] }>("/cart/items", {
       method: "POST",
       token,
-      body: { productId: garmentId, ...rest },
+      body: { productId: input.garmentId, mode: input.mode, size: input.size, startDate: input.startDate },
     });
   } catch (error) {
     return { error: error instanceof ApiError ? error.message : "Couldn't add that to your bag." };

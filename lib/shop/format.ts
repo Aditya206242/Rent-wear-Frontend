@@ -8,3 +8,11 @@ export function formatMoney(amount: number, currency: string): string {
     maximumFractionDigits: currency === "INR" ? 0 : 2,
   }).format(amount);
 }
+
+/** ISO 3166-1 alpha-2 -> Unicode regional indicator flag, e.g. "IN" -> 🇮🇳.
+ * Same trick components/auth/PhoneInput.tsx uses for its country picker. */
+export function regionFlag(isoCode: string): string {
+  return isoCode
+    .toUpperCase()
+    .replace(/./g, (char) => String.fromCodePoint(127397 + char.charCodeAt(0)));
+}

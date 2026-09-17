@@ -27,6 +27,19 @@ function computeAvailability(sizes: ApiSizeAvailability[]): Availability {
 }
 
 /**
+ * The backend's documented shape (docs/BACKEND_API_SPEC.md) marks these
+ * array fields as always-present, but real responses have occasionally
+ * omitted one (e.g. an outfit with no `products`, a product missing
+ * `care`/`measurements`). TypeScript can't catch that at runtime, and an
+ * absent array here used to bubble up as "Cannot read properties of
+ * undefined (reading 'map')" on the page. Default to empty rather than
+ * trust the type.
+ */
+function arr<T>(v: T[] | undefined | null): T[] {
+  return v ?? [];
+}
+
+/**
  * The product LIST endpoint doesn't return per-size availability (see
  * docs/BACKEND_API_SPEC.md §2 — real availability is date-range aware and
  * would mean N+1 calls for a grid). We default to "available" here rather
@@ -39,8 +52,8 @@ function adaptProductSummary(api: ApiProduct): Garment {
     name: api.name,
     brand: api.brand,
     category: api.category,
-    occasions: api.occasions,
-    styles: api.styles,
+    occasions: arr(api.occasions),
+    styles: arr(api.styles),
     color: api.color,
     colorHex: api.colorHex,
     conditionCopy: api.conditionCopy,
@@ -56,18 +69,20 @@ function adaptProductSummary(api: ApiProduct): Garment {
     rating: api.rating,
     reviewCount: api.reviewCount,
     fabric: api.fabric,
-    care: api.care,
-    measurements: api.measurements,
-    views: api.views,
+    care: arr(api.care),
+    measurements: arr(api.measurements),
+    views: arr(api.views),
+    imageUrls: api.imageUrls ?? {},
   };
 }
 
 function adaptProductDetail(api: ApiProductDetail): Garment {
-  const sizes: SizeOption[] = api.sizes.map((s) => ({ size: s.size, available: s.available }));
+  const apiSizes = arr(api.sizes);
+  const sizes: SizeOption[] = apiSizes.map((s) => ({ size: s.size, available: s.available }));
   return {
     ...adaptProductSummary(api),
     sizes,
-    availability: computeAvailability(api.sizes),
+    availability: computeAvailability(apiSizes),
   };
 }
 
@@ -79,7 +94,7 @@ function pick(display: Record<string, number>, keys: string[]): number {
 }
 
 function adaptOutfit(api: ApiOutfit): { outfit: Outfit; garments: Garment[] } {
-  const garments = api.products.map(adaptProductSummary);
+  const garments = arr(api.products).map(adaptProductSummary);
   return {
     outfit: {
       id: api.id,
@@ -100,7 +115,7 @@ export async function listProducts(
 ): Promise<{ items: Garment[]; page: number; pageSize: number; total: number; totalPages: number }> {
   const { currency, ...searchParams } = params;
   const data = await apiFetch<Paginated<ApiProduct>>("/products", { searchParams, currency });
-  return { ...data, items: data.items.map(adaptProductSummary) };
+  return { ...data, items: arr(data.items).map(adaptProductSummary) };
 }
 
 // cache() dedupes this within one request — generateMetadata and the page
@@ -111,7 +126,7 @@ export const getProduct = cache(async (
 ): Promise<{ garment: Garment; similar: Garment[] } | null> => {
   try {
     const data = await apiFetch<ApiProductDetail>(`/products/${id}`, { currency });
-    return { garment: adaptProductDetail(data), similar: data.similar.map(adaptProductSummary) };
+    return { garment: adaptProductDetail(data), similar: arr(data.similar).map(adaptProductSummary) };
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) return null;
     throw error;
@@ -129,7 +144,7 @@ export async function getAvailability(
 
 export async function listOccasionsWithCounts(): Promise<{ code: string; label: Occasion; count: number }[]> {
   const data = await apiFetch<{ items: ApiOccasion[] }>("/occasions");
-  return data.items;
+  return arr(data.items);
 }
 
 export async function listOutfits(
@@ -137,7 +152,9 @@ export async function listOutfits(
   currency?: string
 ): Promise<{ outfit: Outfit; garments: Garment[] }[]> {
   const data = await apiFetch<{ items: ApiOutfit[] }>("/outfits", { searchParams: { occasion }, currency });
-  return data.items.map(adaptOutfit);
+  // An outfit with no resolved garments (missing/empty `products` from the
+  // backend) has nothing to show — skip it rather than render an empty spread.
+  return arr(data.items).map(adaptOutfit).filter((o) => o.garments.length > 0);
 }
 
 export async function getOutfit(id: string, currency?: string): Promise<{ outfit: Outfit; garments: Garment[] } | null> {

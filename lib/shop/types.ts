@@ -38,6 +38,7 @@ export type Garment = {
   care: string[];
   measurements: { label: string; value: string }[];
   views: GarmentView[];
+  imageUrls: Partial<Record<GarmentView, string>>;
 };
 
 export type Outfit = {
@@ -67,4 +68,19 @@ export type CartLine = AddCartLineInput & {
   rentPrice?: number;
   deposit?: number;
   buyPrice?: number;
+};
+
+/** Where an order should ship — collected at checkout and, once given, kept
+ * locally so the next checkout (and the account address page) starts from it. */
+export type DeliveryDetails = {
+  fullName: string;
+  email: string;
+  phone: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+  deliveryNote?: string;
 };

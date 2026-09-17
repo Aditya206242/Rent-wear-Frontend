@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { ShopProvider } from "@/lib/shop/cart-context";
 import { ShopHeader } from "@/components/shop/ShopHeader";
+import { ShopFooter } from "@/components/shop/ShopFooter";
 import { getSession } from "@/lib/auth/session";
 
 export default async function ShopLayout({ children }: { children: ReactNode }) {
@@ -8,9 +9,10 @@ export default async function ShopLayout({ children }: { children: ReactNode }) 
 
   return (
     <ShopProvider isAuthenticated={!!user}>
-      <div className="min-h-screen bg-brand-cream">
+      <div className="flex min-h-screen flex-col bg-brand-cream">
         <ShopHeader user={user} />
-        <main>{children}</main>
+        <main className="flex-1">{children}</main>
+        <ShopFooter />
       </div>
     </ShopProvider>
   );

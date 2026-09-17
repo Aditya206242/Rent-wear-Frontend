@@ -1,13 +1,16 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   createCheckoutAction,
   verifyRazorpayPaymentAction,
   confirmStripePaymentAction,
   type CheckoutResult,
+  type DeliveryDetails,
 } from "@/lib/shop/checkout-actions";
+import { useShopCart } from "@/lib/shop/cart-context";
+import { DeliveryFields } from "@/components/shop/DeliveryFields";
 import { RazorpayCheckout } from "./RazorpayCheckout";
 import { StripeCardForm } from "./StripeCardForm";
 import { formatMoney } from "@/lib/shop/format";
@@ -34,22 +37,55 @@ export function PaymentPanel({
   customer: Customer;
 }) {
   const router = useRouter();
+  const { address: savedAddress, saveAddress } = useShopCart();
   const [idempotencyKey] = useState(() => crypto.randomUUID());
   const [isPending, startTransition] = useTransition();
   const [result, setResult] = useState<Extract<CheckoutResult, { ok: true }> | null>(null);
   const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState<string | null>(null);
+  const deliveryForm = useRef<HTMLFormElement>(null);
+  const [delivery, setDelivery] = useState<DeliveryDetails>({
+    fullName: customer.name,
+    email: customer.email,
+    phone: customer.phone,
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    state: "",
+    postalCode: "",
+    country: "India",
+    deliveryNote: "",
+    ...savedAddress,
+  });
+  const appliedSavedAddress = useRef(false);
+
+  // The saved address loads from localStorage a tick after mount (see
+  // ShopProvider), so pick it up once it arrives rather than only at the
+  // (still-empty) initial render — but only the first time, so it doesn't
+  // clobber what the customer is actively typing.
+  useEffect(() => {
+    if (savedAddress && !appliedSavedAddress.current) {
+      appliedSavedAddress.current = true;
+      setDelivery((current) => ({ ...current, ...savedAddress }));
+    }
+  }, [savedAddress]);
 
   function reset() {
     setResult(null);
     setPhase("idle");
   }
 
+  function updateDelivery<Key extends keyof DeliveryDetails>(key: Key, value: DeliveryDetails[Key]) {
+    setDelivery((current) => ({ ...current, [key]: value }));
+  }
+
   function placeOrder() {
+    if (!deliveryForm.current?.reportValidity()) return;
     setError(null);
     setPhase("awaiting-gateway");
+    saveAddress(delivery);
     startTransition(async () => {
-      const res = await createCheckoutAction(idempotencyKey);
+      const res = await createCheckoutAction(idempotencyKey, delivery);
       if (!res.ok) {
         setError(res.error);
         setPhase("idle");
@@ -101,14 +137,18 @@ export function PaymentPanel({
   return (
     <div className="border-t border-brand-navy/10 px-6 py-5">
       {showPlaceOrderButton && (
-        <button
-          type="button"
-          onClick={placeOrder}
-          disabled={disabled || isPending}
-          className="w-full cursor-pointer bg-brand-navy py-3 font-ui text-sm font-semibold text-white transition-colors hover:bg-brand-navy-dark disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          {isPending ? "Starting checkout…" : `Place order · ${formatMoney(dueNow, currency)}`}
-        </button>
+        <>
+          <form ref={deliveryForm} className="mb-6 space-y-4" onSubmit={(event) => { event.preventDefault(); placeOrder(); }}>
+            <div>
+              <p className="font-ui text-sm font-semibold text-brand-navy">Delivery details</p>
+              <p className="mt-1 font-ui text-xs text-brand-navy/55">Where should we deliver your order?</p>
+            </div>
+            <DeliveryFields value={delivery} onChange={updateDelivery} />
+          </form>
+          <button type="button" onClick={placeOrder} disabled={disabled || isPending} className="w-full cursor-pointer rounded-lg bg-brand-navy py-3 font-ui text-sm font-semibold text-white transition-colors hover:bg-brand-navy-dark disabled:cursor-not-allowed disabled:opacity-40">
+            {isPending ? "Starting checkout…" : `Continue to payment · ${formatMoney(dueNow, currency)}`}
+          </button>
+        </>
       )}
 
       {result?.gateway === "razorpay" && phase === "awaiting-gateway" && (
@@ -117,7 +157,7 @@ export function PaymentPanel({
           <RazorpayCheckout
             order={result.order}
             payment={result.payment}
-            customer={customer}
+            customer={{ name: delivery.fullName, email: delivery.email, phone: delivery.phone }}
             onPaid={handleRazorpayPaid}
             onCancel={reset}
             onError={(message) => {
