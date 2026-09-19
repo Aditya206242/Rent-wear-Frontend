@@ -46,7 +46,7 @@ function adaptGarmentUnit(api: ApiGarmentUnit): Garment {
     stage: api.stage,
     lastMovedAt: api.lastMovedAt,
     timesRented: api.timesRented,
-    condition: api.condition,
+    condition: api.conditionLabel,
     currentCustomer: api.currentCustomerName ?? undefined,
   };
 }

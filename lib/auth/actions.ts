@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { signUpSchema, signInSchema, otpSchema } from "./schemas";
+import { signUpSchema, signInSchema, otpSchema, requestPasswordResetSchema, resetPasswordSchema } from "./schemas";
 import { createSessionCookie, clearSessionCookie, getToken, type SessionUser } from "./session";
 import { apiFetch } from "@/lib/api/client";
 import { ApiError, fieldErrorsFrom } from "@/lib/api/errors";
@@ -10,6 +10,7 @@ import { ApiError, fieldErrorsFrom } from "@/lib/api/errors";
 export type ActionState = {
   error?: string;
   fieldErrors?: Record<string, string>;
+  success?: string;
 };
 
 function safeRedirect(target: FormDataEntryValue | null): string {
@@ -123,6 +124,20 @@ export async function signIn(_prev: ActionState, formData: FormData): Promise<Ac
     });
     token = result.token;
   } catch (error) {
+    // Correct password, unverified account: the backend only reveals the
+    // phone number once the password has already been proven correct, so
+    // this can't be used to enumerate accounts. Without this redirect the
+    // customer would just see an error with no way to finish verifying.
+    if (
+      error instanceof ApiError &&
+      error.status === 403 &&
+      error.details &&
+      typeof error.details === "object" &&
+      "phone" in error.details
+    ) {
+      const phone = (error.details as { phone?: string }).phone;
+      if (phone) redirect(`/verify-otp?phone=${encodeURIComponent(phone)}&redirectTo=${encodeURIComponent(redirectTo)}`);
+    }
     return actionErrorFrom(error);
   }
 
@@ -172,4 +187,48 @@ export async function logout(): Promise<void> {
   }
   await clearSessionCookie();
   redirect("/discover");
+}
+
+export async function requestPasswordReset(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const parsed = requestPasswordResetSchema.safeParse({ email: formData.get("email") });
+  if (!parsed.success) {
+    return { fieldErrors: fieldErrorsFromZod(parsed.error) };
+  }
+
+  const genericSuccess = "If an account exists for that email, we've sent password reset instructions.";
+
+  try {
+    await apiFetch<void>("/auth/request-password-reset", { method: "POST", body: { email: parsed.data.email } });
+  } catch (error) {
+    // Never reveal whether the email exists — the backend resolves this
+    // endpoint identically either way. Only failures that carry no such
+    // signal (rate limiting, network issues, server errors) are surfaced.
+    if (error instanceof ApiError && (error.status === 429 || error.status === 0 || error.status >= 500)) {
+      return actionErrorFrom(error);
+    }
+  }
+
+  return { success: genericSuccess };
+}
+
+export async function resetPassword(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const parsed = resetPasswordSchema.safeParse({
+    token: formData.get("token"),
+    password: formData.get("password"),
+    confirmPassword: formData.get("confirmPassword"),
+  });
+
+  if (!parsed.success) {
+    return { fieldErrors: fieldErrorsFromZod(parsed.error) };
+  }
+
+  const { token, password } = parsed.data;
+
+  try {
+    await apiFetch<void>("/auth/reset-password", { method: "POST", body: { token, password } });
+  } catch (error) {
+    return actionErrorFrom(error);
+  }
+
+  redirect("/sign-in?reset=success");
 }
