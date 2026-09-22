@@ -14,6 +14,10 @@ function lineName(line: CartLine) {
 function lineColorHex(line: CartLine) {
   return line.product?.colorHex ?? "#172b4d";
 }
+function lineImageUrl(line: CartLine) {
+  const urls = line.product?.imageUrls;
+  return urls?.model ?? urls?.front ?? urls?.detail ?? line.product?.coverImageUrl ?? undefined;
+}
 
 export function CartDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { lines, removeLine, isAuthenticated, requireAuth, cartError, dismissCartError } = useShopCart();
@@ -90,7 +94,7 @@ export function CartDrawer({ open, onClose }: { open: boolean; onClose: () => vo
                 {rentals.map((line) => (
                   <li key={`${line.garmentId}-rent`} className="flex gap-3">
                     <div className="h-16 w-12 shrink-0 overflow-hidden rounded-lg">
-                      <GarmentSwatch colorHex={lineColorHex(line)} name={lineName(line)} />
+                      <GarmentSwatch colorHex={lineColorHex(line)} name={lineName(line)} imageUrl={lineImageUrl(line)} />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-ui text-sm font-medium text-brand-navy">{lineName(line)}</p>
@@ -123,7 +127,7 @@ export function CartDrawer({ open, onClose }: { open: boolean; onClose: () => vo
                 {purchases.map((line) => (
                   <li key={`${line.garmentId}-buy`} className="flex gap-3">
                     <div className="h-16 w-12 shrink-0 overflow-hidden rounded-lg">
-                      <GarmentSwatch colorHex={lineColorHex(line)} name={lineName(line)} />
+                      <GarmentSwatch colorHex={lineColorHex(line)} name={lineName(line)} imageUrl={lineImageUrl(line)} />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-ui text-sm font-medium text-brand-navy">{lineName(line)}</p>

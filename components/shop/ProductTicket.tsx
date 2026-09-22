@@ -26,7 +26,7 @@ export function ProductTicket({
   const { addLine, buyNow, toggleWishlist, isWishlisted } = useShopCart();
   const wishlisted = isWishlisted(garment.id);
   const firstAvailableSize = garment.sizes.find((s) => s.available)?.size;
-  const cardImageUrl = garment.imageUrls?.model ?? garment.imageUrls?.front ?? garment.imageUrls?.detail;
+  const cardImageUrl = garment.imageUrls?.model ?? garment.imageUrls?.front ?? garment.imageUrls?.detail ?? garment.coverImageUrl ?? undefined;
   // The product-list endpoint doesn't return per-size stock (see lib/shop/api.ts) —
   // `sizes` is only populated once we've loaded the full detail. Until then we
   // don't know a size to add, so the quick-action opens the detail page instead
@@ -61,7 +61,7 @@ export function ProductTicket({
 
       <div className="p-4">
         <Link href={`/product/${garment.id}`} className="block">
-          <h3 className="mt-0.5 font-display text-lg font-medium leading-tight text-brand-navy">{garment.name}</h3>
+          <h3 className="mt-0.5 font-ui text-lg font-medium leading-tight text-brand-navy">{garment.name}</h3>
         </Link>
 
         <div className="mt-3">
@@ -86,7 +86,7 @@ export function ProductTicket({
                     garmentId: garment.id,
                     mode: "rent",
                     size: firstAvailableSize!,
-                    product: { id: garment.id, name: garment.name, brand: garment.brand, colorHex: garment.colorHex },
+                    product: { id: garment.id, name: garment.name, brand: garment.brand, colorHex: garment.colorHex, imageUrls: garment.imageUrls, coverImageUrl: garment.coverImageUrl },
                     currency: garment.currency,
                     rentPrice: garment.rentPrice,
                     deposit: garment.deposit,
@@ -105,7 +105,7 @@ export function ProductTicket({
                     garmentId: garment.id,
                     mode: "buy",
                     size: firstAvailableSize!,
-                    product: { id: garment.id, name: garment.name, brand: garment.brand, colorHex: garment.colorHex },
+                    product: { id: garment.id, name: garment.name, brand: garment.brand, colorHex: garment.colorHex, imageUrls: garment.imageUrls, coverImageUrl: garment.coverImageUrl },
                     currency: garment.currency,
                     rentPrice: garment.rentPrice,
                     deposit: garment.deposit,

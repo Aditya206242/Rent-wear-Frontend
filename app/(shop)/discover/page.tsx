@@ -1,5 +1,6 @@
 import { OccasionShowcase } from "@/components/shop/OccasionShowcase";
 import { DiscoverPreviewGrid } from "@/components/shop/DiscoverPreviewGrid";
+import { listOccasionsWithCounts, listProducts } from "@/lib/shop/api";
 
 export const metadata = { title: "Discover — LoopWear" };
 
@@ -9,12 +10,11 @@ type Props = {
 
 export default async function DiscoverPage({ searchParams }: Props) {
   await searchParams;
+  const [occasions, catalog] = await Promise.all([listOccasionsWithCounts(), listProducts({ pageSize: 100 })]);
 
   return (
     <div>
-      {/* <HeroSection /> */}
-
-      <OccasionShowcase />
+      <OccasionShowcase occasions={occasions} />
 
       {/*
       <div className="border-t border-brand-navy/10 px-4 pt-8 pb-2 md:px-10">
@@ -27,7 +27,7 @@ export default async function DiscoverPage({ searchParams }: Props) {
       */}
 
       <div id="collection">
-        <DiscoverPreviewGrid />
+        <DiscoverPreviewGrid garments={catalog.items} />
       </div>
     </div>
   );

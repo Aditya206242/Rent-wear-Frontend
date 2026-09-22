@@ -10,20 +10,26 @@ export function ImageFilmstrip({
   name,
   views,
   imageUrls,
+  coverImageUrl,
 }: {
   colorHex: string;
   name: string;
   views: GarmentView[];
   imageUrls?: Partial<Record<GarmentView, string>>;
+  /** Admin-uploaded fallback thumbnail, shown as the sole "view" when this
+   * color has no photos of its own (views is empty) — see
+   * Garment.coverImageUrl. */
+  coverImageUrl?: string | null;
 }) {
   const [active, setActive] = useState(0);
   const previous = () => setActive((current) => (current - 1 + views.length) % views.length);
   const next = () => setActive((current) => (current + 1) % views.length);
+  const heroImageUrl = views.length > 0 ? imageUrls?.[views[active]] : (coverImageUrl ?? undefined);
 
   return (
     <div>
       <div className="relative aspect-4/5 w-full cursor-zoom-in overflow-hidden rounded-xl">
-        <GarmentSwatch colorHex={colorHex} name={name} view={views[active]} imageUrl={imageUrls?.[views[active]]} zoomOnHover />
+        <GarmentSwatch colorHex={colorHex} name={name} view={views[active] ?? "front"} imageUrl={heroImageUrl} zoomOnHover />
         {views.length > 1 && (
           <>
             <button

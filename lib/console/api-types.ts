@@ -1,14 +1,11 @@
 import type { LifecycleStage, OrderStatus, Garment } from "./types";
 
 /**
- * Best-effort shapes for the Console (operator) endpoints. Unlike the Shop
- * endpoints, the integration guide only gave paths for most of these — no
- * example payloads — so these are inferred from docs/BACKEND_API_SPEC.md's
- * own data model (garment_units, orders, etc.) rather than transcribed from
- * a documented response. Verify field names against the real backend once
- * its DB issue (see chat) is resolved; the adapters in api.ts are written
- * defensively (optional chaining, fallbacks) so a near-miss doesn't crash
- * the page, but they may need small renames.
+ * Console (operator) endpoint shapes — verified directly against the real
+ * backend (src/modules/console/*). Every field below is now what the
+ * backend actually returns; the adapters in api.ts stay defensive
+ * (optional chaining, fallbacks) as a courtesy, not because the shape is
+ * still a guess.
  */
 
 export type ApiGarmentUnit = {
@@ -98,3 +95,31 @@ export type ApiNotification = {
   createdAt: string;
   read: boolean;
 };
+
+export type ApiConsoleProduct = {
+  id: string;
+  name: string;
+  brand: string;
+  category: string;
+  occasions: string[];
+  styles: string[];
+  color: string;
+  colorHex: string;
+  rentPricePaise: number;
+  rentDays: number;
+  buyPricePaise: number;
+  depositPaise: number;
+  deliveryDays: number;
+  fabric: string;
+  care: string[];
+  views: string[];
+  measurements: { label: string; value: string }[];
+  imageUrls: Partial<Record<"front" | "back" | "fabric" | "model" | "detail", string>>;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  unitCount: number;
+};
+
+export type ApiCourier = { id: string; name: string; zones: string[] };
+export type ApiFacility = { id: string; name: string; city: string };

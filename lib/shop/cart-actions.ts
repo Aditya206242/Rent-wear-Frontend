@@ -3,7 +3,7 @@
 import { getToken } from "@/lib/auth/session";
 import { apiFetch } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/errors";
-import type { AddCartLineInput, RentOrBuy } from "./types";
+import type { AddCartLineInput, GarmentView, RentOrBuy } from "./types";
 
 /**
  * Thin server-side proxies to the real backend's cart/wishlist endpoints.
@@ -19,7 +19,13 @@ export type ApiCartItem = {
   mode: RentOrBuy;
   size: string;
   startDate?: string;
-  product?: { id: string; name: string; brand: string };
+  product?: {
+    id: string;
+    name: string;
+    brand: string;
+    colorHex?: string;
+    imageUrls?: Partial<Record<GarmentView, string>>;
+  };
   pricing?: { displayCurrency: string; display: Record<string, number> };
 };
 

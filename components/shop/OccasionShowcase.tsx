@@ -1,25 +1,21 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
-import type { Occasion } from "@/lib/shop/types";
+import type { ApiOccasion } from "@/lib/shop/api-types";
 
-type ShowcaseTile = {
-  label: string;
-  occasion: Occasion;
-  blurb: string;
-  image: string;
-};
+/**
+ * Tiles are admin-managed (see the admin console's Shop by Occasion
+ * screen) — an occasion with no uploaded imageUrl yet is left out of the
+ * grid entirely rather than filled with placeholder/stock imagery. If
+ * nothing has been configured yet, the whole section renders nothing.
+ */
+export function OccasionShowcase({ occasions }: { occasions: ApiOccasion[] }) {
+  const tiles = occasions.filter(
+    (occasion): occasion is ApiOccasion & { imageUrl: string; blurb: string } =>
+      Boolean(occasion.imageUrl && occasion.blurb)
+  );
 
-const TILES: ShowcaseTile[] = [
-  { label: "Wedding", occasion: "Wedding", blurb: "Gowns & sherwanis", image: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=700&q=85" },
-  { label: "Party", occasion: "Party", blurb: "Statement pieces", image: "https://images.unsplash.com/photo-1566174053879-31528523f8ae?auto=format&fit=crop&w=700&q=85" },
-  { label: "Office", occasion: "Office", blurb: "Tailored & sharp", image: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=700&q=85" },
-  { label: "Date Night", occasion: "Date Night", blurb: "Made to be seen", image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=700&q=85" },
-  { label: "Festival", occasion: "Festival", blurb: "Colour & drama", image: "https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=700&q=85" },
-  { label: "Travel", occasion: "Travel", blurb: "Comfort, styled", image: "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=700&q=85" },
-  { label: "Everyday", occasion: "Everyday", blurb: "Easy everyday", image: "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=700&q=85" },
-];
+  if (tiles.length === 0) return null;
 
-export function OccasionShowcase() {
   return (
     <section aria-labelledby="shop-by-occasion" className="px-4 py-7 md:px-10 md:py-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -39,16 +35,16 @@ export function OccasionShowcase() {
       </div>
 
       <ul className="mt-5 flex snap-x snap-mandatory gap-4 overflow-x-auto pb-1 sm:grid sm:grid-cols-2 sm:overflow-visible sm:pb-0 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-        {TILES.map((tile) => {
+        {tiles.map((tile) => {
           return (
-            <li key={tile.label} className="w-60 shrink-0 snap-start sm:min-h-75 sm:w-auto">
+            <li key={tile.code} className="w-60 shrink-0 snap-start sm:min-h-75 sm:w-auto">
               <Link
-                href={`/discover?occasion=${encodeURIComponent(tile.occasion)}`}
+                href={`/discover?occasion=${encodeURIComponent(tile.label)}`}
                 className="group relative block aspect-[2.7/4] overflow-hidden rounded-xl border border-brand-navy/10 transition-shadow duration-300 hover:shadow-[0_20px_44px_-20px_rgba(11,31,58,0.4)]"
               >
                 <div
                   className="absolute inset-0 transition-transform duration-500 ease-out group-hover:scale-[1.06]"
-                  style={{ backgroundImage: `url(${tile.image})`, backgroundPosition: "center", backgroundSize: "cover" }}
+                  style={{ backgroundImage: `url(${tile.imageUrl})`, backgroundPosition: "center", backgroundSize: "cover" }}
                 />
 
                 <div
