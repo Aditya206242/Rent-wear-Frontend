@@ -28,7 +28,7 @@ export function ProductDetail({ garment, similar }: { garment: Garment; similar:
       mode,
       size,
       startDate: mode === "rent" ? startDate || undefined : undefined,
-      product: { id: garment.id, name: garment.name, brand: garment.brand, colorHex: garment.colorHex },
+      product: { id: garment.id, name: garment.name, brand: garment.brand, colorHex: garment.colorHex, imageUrls: garment.imageUrls, coverImageUrl: garment.coverImageUrl },
       currency: garment.currency,
       rentPrice: garment.rentPrice,
       deposit: garment.deposit,
@@ -41,13 +41,13 @@ export function ProductDetail({ garment, similar }: { garment: Garment; similar:
   return (
     <div>
       <div className="grid grid-cols-1 gap-8 px-4 py-8 md:px-10 lg:grid-cols-2 lg:gap-12">
-        <ImageFilmstrip colorHex={garment.colorHex} name={garment.name} views={garment.views} imageUrls={garment.imageUrls} />
+        <ImageFilmstrip colorHex={garment.colorHex} name={garment.name} views={garment.views} imageUrls={garment.imageUrls} coverImageUrl={garment.coverImageUrl} />
 
         <div className="max-w-lg">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="font-mono text-xs uppercase tracking-wide text-brand-navy/40">{garment.brand}</p>
-              <h1 className="mt-1 font-display text-3xl font-medium text-brand-navy">{garment.name}</h1>
+              <h1 className="mt-1 font-ui text-3xl font-medium text-brand-navy">{garment.name}</h1>
               <p className="mt-1 font-ui text-sm text-brand-navy/55">
                 {garment.category} · {garment.color}
               </p>
@@ -67,6 +67,8 @@ export function ProductDetail({ garment, similar }: { garment: Garment; similar:
             <Star size={14} fill="var(--color-brand-cyan)" strokeWidth={0} />
             {garment.rating} <span className="text-brand-navy/40">({garment.reviewCount} reviews)</span>
           </div>
+
+          {garment.description && <p className="mt-4 font-ui text-sm leading-relaxed text-brand-navy/70">{garment.description}</p>}
 
           <div className="mt-6">
             <RentBuyToggle value={mode} onChange={setMode} rentPrice={garment.rentPrice} rentDays={garment.rentDays} buyPrice={garment.buyPrice} currency={garment.currency} />
@@ -149,7 +151,7 @@ export function ProductDetail({ garment, similar }: { garment: Garment; similar:
             {similar.map((g) => (
               <Link key={g.id} href={`/product/${g.id}`} className="w-40 shrink-0">
                 <div className="aspect-[3/4] overflow-hidden rounded-lg">
-                  <GarmentSwatch colorHex={g.colorHex} name={g.name} imageUrl={g.imageUrls?.front} />
+                  <GarmentSwatch colorHex={g.colorHex} name={g.name} imageUrl={g.imageUrls?.front ?? g.coverImageUrl ?? undefined} />
                 </div>
                 <p className="mt-2 font-ui text-sm font-medium text-brand-navy">{g.name}</p>
                 <p className="font-mono text-xs text-brand-navy/55">{formatMoney(g.rentPrice, g.currency)} / {g.rentDays}d</p>

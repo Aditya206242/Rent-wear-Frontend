@@ -6,7 +6,10 @@ import type {
   ApiAnalyticsSeries,
   ApiConsoleCustomer,
   ApiConsoleOrder,
+  ApiConsoleProduct,
+  ApiCourier,
   ApiDeliveryJob,
+  ApiFacility,
   ApiGarmentUnit,
   ApiLaundryBatch,
   ApiLifecycleCounts,
@@ -14,8 +17,11 @@ import type {
   ApiPayment,
 } from "./api-types";
 import type {
+  AdminProduct,
+  Courier,
   Customer,
   DeliveryJob,
+  Facility,
   Garment,
   LaundryBatch,
   LifecycleStage,
@@ -205,4 +211,67 @@ export async function listConsoleNotifications(): Promise<{ items: Notification[
   const token = await operatorToken();
   const data = await apiFetch<{ items: ApiNotification[]; unreadCount: number }>("/console/notifications", { token });
   return { items: data.items.map(adaptNotification), unreadCount: data.unreadCount };
+}
+
+// ---------- Products ----------
+
+function adaptProduct(api: ApiConsoleProduct): AdminProduct {
+  return {
+    id: api.id,
+    name: api.name,
+    brand: api.brand,
+    category: api.category,
+    occasions: api.occasions,
+    styles: api.styles,
+    color: api.color,
+    colorHex: api.colorHex,
+    rentPrice: rupees(api.rentPricePaise),
+    rentDays: api.rentDays,
+    buyPrice: rupees(api.buyPricePaise),
+    deposit: rupees(api.depositPaise),
+    deliveryDays: api.deliveryDays,
+    fabric: api.fabric,
+    care: api.care,
+    views: api.views as AdminProduct["views"],
+    measurements: api.measurements,
+    imageUrls: api.imageUrls,
+    isActive: api.isActive,
+    createdAt: api.createdAt,
+    unitCount: api.unitCount,
+  };
+}
+
+export async function listConsoleProducts(
+  params: { q?: string; category?: string; isActive?: boolean; page?: number; pageSize?: number } = {}
+) {
+  const token = await operatorToken();
+  const { isActive, ...rest } = params;
+  const searchParams = { ...rest, isActive: isActive === undefined ? undefined : String(isActive) };
+  const data = await apiFetch<Paginated<ApiConsoleProduct>>("/console/products", { token, searchParams });
+  return { ...data, items: data.items.map(adaptProduct) };
+}
+
+export async function getConsoleProduct(id: string): Promise<AdminProduct | null> {
+  const token = await operatorToken();
+  try {
+    const data = await apiFetch<ApiConsoleProduct>(`/console/products/${id}`, { token });
+    return adaptProduct(data);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) return null;
+    throw error;
+  }
+}
+
+// ---------- Couriers & facilities (reference data for pickers) ----------
+
+export async function listCouriers(): Promise<Courier[]> {
+  const token = await operatorToken();
+  const data = await apiFetch<{ items: ApiCourier[] }>("/console/couriers", { token });
+  return data.items;
+}
+
+export async function listFacilities(): Promise<Facility[]> {
+  const token = await operatorToken();
+  const data = await apiFetch<{ items: ApiFacility[] }>("/console/facilities", { token });
+  return data.items;
 }

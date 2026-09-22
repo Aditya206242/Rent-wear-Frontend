@@ -17,8 +17,8 @@ import type { CartLine, DeliveryDetails, RentOrBuy } from "./types";
 type CartContextValue = {
   lines: CartLine[];
   addLine: (input: CartLine) => void;
-  /** Adds the line and, once the backend has actually confirmed it, sends the shopper straight to checkout — for a card's "Buy" action rather than "add and keep browsing". */
-  buyNow: (input: CartLine) => Promise<void>;
+  /** Adds the line and sends the shopper straight to checkout — for a card's "Buy" action rather than "add and keep browsing". */
+  buyNow: (input: CartLine) => void;
   removeLine: (garmentId: string, mode: RentOrBuy) => void;
   rentalCount: number;
   purchaseCount: number;
@@ -74,7 +74,13 @@ function adaptCartItem(item: ApiCartItem): CartLine {
     size: item.size,
     startDate: item.startDate,
     product: item.product
-      ? { id: item.product.id, name: item.product.name, brand: item.product.brand, colorHex: "#172b4d" }
+      ? {
+          id: item.product.id,
+          name: item.product.name,
+          brand: item.product.brand,
+          colorHex: item.product.colorHex ?? "#172b4d",
+          imageUrls: item.product.imageUrls,
+        }
       : undefined,
     currency: item.pricing?.displayCurrency,
     rentPrice: item.pricing?.display?.rentPrice,
@@ -140,75 +146,66 @@ export function ShopProvider({ children, isAuthenticated }: { children: ReactNod
     [router, pathname]
   );
 
+  // Bug fix (checkout showed "Cart is empty" even right after adding an
+  // item): this used to only update local React state + localStorage and
+  // never actually called the backend, for EITHER guests or signed-in
+  // users. That's fine for a guest (no backend cart exists for them yet —
+  // it gets merged in on sign-in, see the effect above), but for a
+  // signed-in user it meant the backend's real Cart row was never written
+  // to at all. The checkout page displays this same local `lines` state, so
+  // it looked fine right up until "Continue to payment" — which calls
+  // POST /checkout on the backend, and the backend reads its OWN persisted
+  // cart (not anything the client sends), found it empty, and rejected the
+  // order. Now this actually calls addCartItemAction for a signed-in user,
+  // same as removeLine already did for removals, and reconciles `lines`
+  // with whatever the backend confirms it saved rather than trusting the
+  // optimistic local guess.
   const addLine = useCallback(
     (input: CartLine) => {
-      // The bag itself doesn't require an account — only checkout does — so
-      // guests get a locally-persisted cart instead of being bounced to
-      // sign-in. Optimistic either way: show it immediately, reconcile with
-      // the server's response (real pricing/product data) once it lands.
-      let previous: CartLine[] = [];
       setLines((prev) => {
-        previous = prev;
         const next = [...prev.filter((l) => !(l.garmentId === input.garmentId && l.mode === input.mode)), input];
         if (!isAuthenticated) writeGuestCart(next);
         return next;
       });
 
-      if (isAuthenticated) {
-        addCartItemAction(input).then((res) => {
-          if ("items" in res) {
-            setCartError(null);
-            setLines(res.items.map(adaptCartItem));
-          } else {
-            // The backend rejected the add — undo the optimistic line so the
-            // bag (and checkout, which reads the cart fresh from the
-            // backend) doesn't show something that was never actually saved.
-            setLines(previous);
-            setCartError(res.error);
-          }
-        });
-      }
+      if (!isAuthenticated) return;
+
+      addCartItemAction(input).then((result) => {
+        if ("error" in result) {
+          setCartError(result.error);
+          setLines((prev) => prev.filter((l) => !(l.garmentId === input.garmentId && l.mode === input.mode)));
+          return;
+        }
+        setLines(result.items.map(adaptCartItem));
+      });
     },
     [isAuthenticated]
   );
 
   const buyNow = useCallback(
     async (input: CartLine) => {
-      if (!isAuthenticated) {
-        // Keep it in the guest bag so it's there once they've signed in
-        // (the merge-on-sign-in effect above picks it up), then send them
-        // to sign-in with checkout as the destination.
-        setLines((prev) => {
-          const next = [...prev.filter((l) => !(l.garmentId === input.garmentId && l.mode === input.mode)), input];
-          writeGuestCart(next);
-          return next;
-        });
-        requireAuth("/checkout");
-        return;
-      }
-
-      // Checkout reads the cart fresh from the backend (it's a Server
-      // Component, not wired to this context), so — unlike the regular
-      // add-to-bag, which is optimistic-and-forget — this has to wait for
-      // the backend to actually confirm the line before navigating there,
-      // or checkout would render without the item that was just "bought."
-      let previous: CartLine[] = [];
       setLines((prev) => {
-        previous = prev;
-        return [...prev.filter((l) => !(l.garmentId === input.garmentId && l.mode === input.mode)), input];
+        const next = [...prev.filter((l) => !(l.garmentId === input.garmentId && l.mode === input.mode)), input];
+        if (!isAuthenticated) writeGuestCart(next);
+        return next;
       });
 
-      const res = await addCartItemAction(input);
-      if ("items" in res) {
-        setCartError(null);
-        setLines(res.items.map(adaptCartItem));
-        router.push("/checkout");
-      } else {
-        setLines(previous);
-        setCartError(res.error);
+      if (isAuthenticated) {
+        // Awaited, not fire-and-forget: checkout reads the backend's cart,
+        // so the write has to land before we navigate there, or the same
+        // "empty cart" failure happens on a fast connection every time.
+        const result = await addCartItemAction(input);
+        if ("error" in result) {
+          setCartError(result.error);
+          setLines((prev) => prev.filter((l) => !(l.garmentId === input.garmentId && l.mode === input.mode)));
+          return;
+        }
+        setLines(result.items.map(adaptCartItem));
       }
+
+      router.push("/checkout");
     },
-    [isAuthenticated, requireAuth, router]
+    [isAuthenticated, router]
   );
 
   const removeLine = useCallback(

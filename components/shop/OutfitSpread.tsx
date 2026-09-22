@@ -18,7 +18,7 @@ export function OutfitSpread({ outfit, garments }: { outfit: Outfit; garments: G
           garmentId: g.id,
           mode: "rent",
           size,
-          product: { id: g.id, name: g.name, brand: g.brand, colorHex: g.colorHex },
+          product: { id: g.id, name: g.name, brand: g.brand, colorHex: g.colorHex, imageUrls: g.imageUrls, coverImageUrl: g.coverImageUrl },
           currency: g.currency,
           rentPrice: g.rentPrice,
           deposit: g.deposit,

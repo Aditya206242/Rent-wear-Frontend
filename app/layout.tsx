@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Fraunces, Space_Grotesk, JetBrains_Mono } from "next/font/google";
+import { Fraunces, Jost, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -9,9 +9,11 @@ const fraunces = Fraunces({
   display: "swap",
 });
 
-const spaceGrotesk = Space_Grotesk({
+// Geometric sans, free on Google Fonts — closest available match to the
+// commercial "Panton" family this was requested as a lookalike for.
+const jost = Jost({
   subsets: ["latin"],
-  variable: "--font-space-grotesk",
+  variable: "--font-jost",
   display: "swap",
 });
 
@@ -28,7 +30,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${fraunces.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable}`}>
+    <html lang="en" className={`${fraunces.variable} ${jost.variable} ${jetbrainsMono.variable}`}>
       <body className="antialiased font-ui">{children}</body>
     </html>
   );

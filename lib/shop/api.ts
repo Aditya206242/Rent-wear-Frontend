@@ -3,7 +3,7 @@ import { apiFetch } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/errors";
 import type { Paginated } from "@/lib/api/types";
 import type { ApiOccasion, ApiOutfit, ApiProduct, ApiProductDetail, ApiSizeAvailability } from "./api-types";
-import type { Availability, Garment, Occasion, Outfit, SizeOption } from "./types";
+import type { Availability, Garment, Outfit, SizeOption } from "./types";
 
 export type ProductListParams = {
   page?: number;
@@ -40,13 +40,17 @@ function arr<T>(v: T[] | undefined | null): T[] {
 }
 
 /**
- * The product LIST endpoint doesn't return per-size availability (see
- * docs/BACKEND_API_SPEC.md §2 — real availability is date-range aware and
- * would mean N+1 calls for a grid). We default to "available" here rather
- * than guess wrong in either direction; the product DETAIL page below uses
- * the real `sizes[]`/`unitsFree` data and is accurate.
+ * The product LIST endpoint doesn't return per-date availability (see
+ * docs/BACKEND_API_SPEC.md §2 — that's date-range aware and would mean N+1
+ * calls for a grid) but it does now return each color variant's declared
+ * sizes (catalog metadata, not live stock — see the admin's VariantSize
+ * model). We surface those as "available" here rather than an empty list,
+ * so the discover grid's size filter and "first available size" actually
+ * work; the product DETAIL page below uses the real `sizes[]`/`unitsFree`
+ * data for the accurate, date-aware picture.
  */
 function adaptProductSummary(api: ApiProduct): Garment {
+  const declaredSizes = Array.from(new Set(arr(api.variants).flatMap((v) => v.sizes)));
   return {
     id: api.id,
     name: api.name,
@@ -62,8 +66,8 @@ function adaptProductSummary(api: ApiProduct): Garment {
     rentDays: api.rentDays,
     buyPrice: api.pricing.display.buyPrice,
     deposit: api.pricing.display.deposit,
-    sizes: [],
-    availability: "available",
+    sizes: declaredSizes.map((size) => ({ size, available: true })),
+    availability: declaredSizes.length > 0 ? "available" : "unavailable",
     availableFrom: "",
     deliveryDays: api.deliveryDays,
     rating: api.rating,
@@ -71,8 +75,10 @@ function adaptProductSummary(api: ApiProduct): Garment {
     fabric: api.fabric,
     care: arr(api.care),
     measurements: arr(api.measurements),
+    description: api.description,
     views: arr(api.views),
     imageUrls: api.imageUrls ?? {},
+    coverImageUrl: api.coverImageUrl ?? null,
   };
 }
 
@@ -142,7 +148,7 @@ export async function getAvailability(
   return apiFetch(`/products/${id}/availability`, { searchParams: { size, start, end } });
 }
 
-export async function listOccasionsWithCounts(): Promise<{ code: string; label: Occasion; count: number }[]> {
+export async function listOccasionsWithCounts(): Promise<ApiOccasion[]> {
   const data = await apiFetch<{ items: ApiOccasion[] }>("/occasions");
   return arr(data.items);
 }

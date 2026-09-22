@@ -159,3 +159,32 @@ export type AnalyticsSeries = {
   changePct: number;
   narrative: string;
 };
+
+export type ProductView = "front" | "back" | "fabric" | "model" | "detail";
+
+export type AdminProduct = {
+  id: string;
+  name: string;
+  brand: string;
+  category: string;
+  occasions: string[];
+  styles: string[];
+  color: string;
+  colorHex: string;
+  rentPrice: number;
+  rentDays: number;
+  buyPrice: number;
+  deposit: number;
+  deliveryDays: number;
+  fabric: string;
+  care: string[];
+  views: ProductView[];
+  measurements: { label: string; value: string }[];
+  imageUrls: Partial<Record<ProductView, string>>;
+  isActive: boolean;
+  createdAt: string;
+  unitCount: number;
+};
+
+export type Courier = { id: string; name: string; zones: string[] };
+export type Facility = { id: string; name: string; city: string };

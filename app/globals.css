@@ -46,7 +46,7 @@
 
   /* ---- type ---- */
   --font-display: var(--font-fraunces), "Iowan Old Style", serif;
-  --font-ui: var(--font-space-grotesk), "Segoe UI", sans-serif;
+  --font-ui: var(--font-jost), "Segoe UI", sans-serif;
   --font-mono: var(--font-mono-console), "SFMono-Regular", monospace;
 
   /* ---- radius: sharp, paper-like ---- */

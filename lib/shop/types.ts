@@ -37,8 +37,12 @@ export type Garment = {
   fabric: string;
   care: string[];
   measurements: { label: string; value: string }[];
+  description: string;
   views: GarmentView[];
   imageUrls: Partial<Record<GarmentView, string>>;
+  /** Admin-uploaded fallback thumbnail — shown when the current color has no
+   * photo of its own yet (see imageUrls above, which takes priority). */
+  coverImageUrl: string | null;
 };
 
 export type Outfit = {
@@ -63,7 +67,14 @@ export type AddCartLineInput = {
 };
 
 export type CartLine = AddCartLineInput & {
-  product?: { id: string; name: string; brand: string; colorHex: string };
+  product?: {
+    id: string;
+    name: string;
+    brand: string;
+    colorHex: string;
+    imageUrls?: Partial<Record<GarmentView, string>>;
+    coverImageUrl?: string | null;
+  };
   currency?: string;
   rentPrice?: number;
   deposit?: number;

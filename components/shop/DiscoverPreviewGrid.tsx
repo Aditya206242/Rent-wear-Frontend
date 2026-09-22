@@ -3,11 +3,8 @@
 import { useMemo, useState } from "react";
 import { SlidersHorizontal, ChevronDown, X } from "lucide-react";
 import { ProductTicket } from "./ProductTicket";
-import { MOCK_GARMENTS } from "@/lib/shop/mock-garments";
-import type { RentOrBuy } from "@/lib/shop/types";
+import type { Garment, RentOrBuy } from "@/lib/shop/types";
 
-const CATEGORIES = Array.from(new Set(MOCK_GARMENTS.map((g) => g.category))).sort();
-const SIZES = Array.from(new Set(MOCK_GARMENTS.flatMap((g) => g.sizes.map((s) => s.size)))).sort();
 const PRICE_MAX = 20000;
 const PRICE_STEP = 100;
 
@@ -64,12 +61,14 @@ function MenuOption({ label, active, onClick }: { label: string; active: boolean
 }
 
 /**
- * Preview product grid backed by dummy data (lib/shop/mock-garments.ts), not
- * the live catalog — lets the card/filter design be reviewed without a
- * working backend. Filtering, sorting and the rent/buy toggle all run
- * client-side against the fixed mock set.
+ * Product grid for the /discover page. Filtering, sorting and the rent/buy
+ * toggle all run client-side against `garments` — the real catalog, fetched
+ * server-side by the page and passed in as a prop (see
+ * app/(shop)/discover/page.tsx). Previously this rendered fixed dummy data
+ * from lib/shop/mock-garments.ts regardless of what was actually in the
+ * database — a product created in the admin panel would never appear here.
  */
-export function DiscoverPreviewGrid() {
+export function DiscoverPreviewGrid({ garments }: { garments: Garment[] }) {
   const [openMenu, setOpenMenu] = useState<OpenMenu>(null);
   const [category, setCategory] = useState<string | null>(null);
   const [size, setSize] = useState<string | null>(null);
@@ -79,6 +78,9 @@ export function DiscoverPreviewGrid() {
   const [sort, setSort] = useState<SortKey>("recommended");
   const minPrice = Number(priceMin || 0);
   const maxPrice = Number(priceMax || PRICE_MAX);
+
+  const categories = useMemo(() => Array.from(new Set(garments.map((g) => g.category))).sort(), [garments]);
+  const sizes = useMemo(() => Array.from(new Set(garments.flatMap((g) => g.sizes.map((s) => s.size)))).sort(), [garments]);
 
   function toggle(menu: OpenMenu) {
     setOpenMenu((current) => (current === menu ? null : menu));
@@ -97,7 +99,7 @@ export function DiscoverPreviewGrid() {
   }
 
   const filtered = useMemo(() => {
-    let items = MOCK_GARMENTS.filter((g) => {
+    let items = garments.filter((g) => {
       if (category && g.category !== category) return false;
       if (size && !g.sizes.some((s) => s.size === size && s.available)) return false;
       const price = mode === "rent" ? g.rentPrice : g.buyPrice;
@@ -108,7 +110,7 @@ export function DiscoverPreviewGrid() {
     if (sort === "price-asc") items = [...items].sort((a, b) => (mode === "rent" ? a.rentPrice - b.rentPrice : a.buyPrice - b.buyPrice));
     if (sort === "price-desc") items = [...items].sort((a, b) => (mode === "rent" ? b.rentPrice - a.rentPrice : b.buyPrice - a.buyPrice));
     return items;
-  }, [category, size, priceMin, priceMax, mode, sort]);
+  }, [garments, category, size, priceMin, priceMax, mode, sort]);
 
   const activeCount = (category ? 1 : 0) + (size ? 1 : 0) + (priceMin || priceMax ? 1 : 0);
 
@@ -123,14 +125,14 @@ export function DiscoverPreviewGrid() {
 
           <Dropdown label="Category" active={!!category} open={openMenu === "category"} onToggle={() => toggle("category")}>
             <MenuOption label="All categories" active={!category} onClick={() => { setCategory(null); setOpenMenu(null); }} />
-            {CATEGORIES.map((c) => (
+            {categories.map((c) => (
               <MenuOption key={c} label={c} active={category === c} onClick={() => { setCategory(c); setOpenMenu(null); }} />
             ))}
           </Dropdown>
 
           <Dropdown label="Size" active={!!size} open={openMenu === "size"} onToggle={() => toggle("size")}>
             <MenuOption label="All sizes" active={!size} onClick={() => { setSize(null); setOpenMenu(null); }} />
-            {SIZES.map((s) => (
+            {sizes.map((s) => (
               <MenuOption key={s} label={s} active={size === s} onClick={() => { setSize(s); setOpenMenu(null); }} />
             ))}
           </Dropdown>

@@ -44,7 +44,7 @@ export function ProductQuickView({ garment, onClose }: { garment: Garment; onClo
 			mode: cartMode,
 			size,
 			startDate: cartMode === "rent" ? startDate || undefined : undefined,
-			product: { id: garment.id, name: garment.name, brand: garment.brand, colorHex: garment.colorHex },
+			product: { id: garment.id, name: garment.name, brand: garment.brand, colorHex: garment.colorHex, imageUrls: garment.imageUrls, coverImageUrl: garment.coverImageUrl },
 			currency: garment.currency,
 			rentPrice: garment.rentPrice,
 			deposit: garment.deposit,
@@ -64,7 +64,7 @@ export function ProductQuickView({ garment, onClose }: { garment: Garment; onClo
 			>
 			<div className="grid max-h-[calc(100vh-2rem)] grid-cols-1 overflow-y-auto md:grid-cols-[minmax(0,1.05fr)_minmax(320px,0.95fr)]">
 				<div className="relative min-h-[360px] bg-brand-surface p-5 md:min-h-[600px] md:p-7">
-					<ImageFilmstrip colorHex={garment.colorHex} name={garment.name} views={garment.views} imageUrls={garment.imageUrls} />
+					<ImageFilmstrip colorHex={garment.colorHex} name={garment.name} views={garment.views} imageUrls={garment.imageUrls} coverImageUrl={garment.coverImageUrl} />
 					<div className="pointer-events-none absolute inset-x-5 top-5 flex items-start justify-end md:inset-x-7 md:top-7">
 						<button
 							type="button"
@@ -83,7 +83,7 @@ export function ProductQuickView({ garment, onClose }: { garment: Garment; onClo
 					</button>
 
 					<p className="font-mono text-[10px] uppercase tracking-[0.16em] text-brand-navy/45">{garment.brand}</p>
-					<h2 className="mt-1 max-w-sm font-display text-2xl font-medium leading-tight text-brand-navy">{garment.name}</h2>
+					<h2 className="mt-1 max-w-sm font-ui text-2xl font-medium leading-tight text-brand-navy">{garment.name}</h2>
 					<p className="mt-1 font-ui text-sm text-brand-navy/55">{garment.category} · {garment.color}</p>
 
 					<div className="mt-2 flex items-center gap-1.5 font-ui text-sm text-brand-navy/60">

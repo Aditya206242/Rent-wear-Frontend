@@ -28,10 +28,13 @@ export const config = {
   // rules out the "not logged in at all" case before that check runs.
   matcher: [
     "/account/:path*",
-    "/checkout/:path*",
+    // /checkout is intentionally not gated here while its UI is being built
+    // against local/dummy cart data (see CheckoutClient.tsx) instead of the
+    // backend — add it back once checkout is wired to the real cart/session.
     "/orders/:path*",
     "/overview/:path*",
     "/operations/:path*",
+    "/products/:path*",
     "/inventory/:path*",
     "/laundry/:path*",
     "/orders/:path*",
