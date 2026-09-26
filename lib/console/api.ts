@@ -7,7 +7,6 @@ import type {
   ApiConsoleCustomer,
   ApiConsoleOrder,
   ApiConsoleProduct,
-  ApiCourier,
   ApiDeliveryJob,
   ApiFacility,
   ApiGarmentUnit,
@@ -18,7 +17,6 @@ import type {
 } from "./api-types";
 import type {
   AdminProduct,
-  Courier,
   Customer,
   DeliveryJob,
   Facility,
@@ -262,13 +260,7 @@ export async function getConsoleProduct(id: string): Promise<AdminProduct | null
   }
 }
 
-// ---------- Couriers & facilities (reference data for pickers) ----------
-
-export async function listCouriers(): Promise<Courier[]> {
-  const token = await operatorToken();
-  const data = await apiFetch<{ items: ApiCourier[] }>("/console/couriers", { token });
-  return data.items;
-}
+// ---------- Facilities (reference data for pickers) ----------
 
 export async function listFacilities(): Promise<Facility[]> {
   const token = await operatorToken();

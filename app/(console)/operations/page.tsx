@@ -20,7 +20,6 @@ export default async function OperationsPage() {
           { label: "In the field", value: String(inField.length) },
           { label: "Upcoming reservations", value: String(upcoming.length) },
           { label: "Overdue", value: String(overdue), tone: overdue > 0 ? "danger" : "success" },
-          { label: "Avg. rental length", value: "5d" },
         ]}
       />
 

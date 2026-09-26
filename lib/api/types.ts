@@ -20,14 +20,7 @@ export type ProductPricing = PricingEnvelope<
   { rentPrice: number; buyPrice: number; deposit: number }
 >;
 
-export type CartLinePricing = PricingEnvelope<Record<string, number>, Record<string, number>>;
-
 export type OrderPricing = PricingEnvelope<
   { totalPaise: number; depositTotalPaise: number },
   { total: number; depositTotal: number }
->;
-
-export type OrderItemPricing = PricingEnvelope<
-  { unitPricePaise: number; depositPaise: number },
-  { unitPrice: number; deposit: number }
 >;

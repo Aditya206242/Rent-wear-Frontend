@@ -9,8 +9,7 @@ const fraunces = Fraunces({
   display: "swap",
 });
 
-// Geometric sans, free on Google Fonts — closest available match to the
-// commercial "Panton" family this was requested as a lookalike for.
+
 const jost = Jost({
   subsets: ["latin"],
   variable: "--font-jost",

@@ -44,7 +44,6 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[1.6fr_1fr] lg:items-start">
         <div className="space-y-6">
-          {/* order information */}
           <div className="rounded-xl border border-brand-navy/10 bg-white px-6 py-5">
             <h2 className="font-display text-base font-semibold text-brand-navy">Order Information</h2>
             <dl className="mt-3 divide-y divide-brand-navy/8 font-ui text-sm">
@@ -69,10 +68,6 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
                 </div>
               )}
               <div className="flex items-center justify-between py-2.5">
-                <dt className="text-brand-navy/50">Payment Method</dt>
-                <dd className="font-medium text-brand-navy">Visa •••• 4821</dd>
-              </div>
-              <div className="flex items-center justify-between py-2.5">
                 <dt className="text-brand-navy/50">Payment Status</dt>
                 <dd>
                   <span className={`rounded-full px-2.5 py-0.5 font-ui text-[11px] font-semibold ${paid ? "bg-emerald-700/10 text-emerald-800" : "bg-amber-700/10 text-amber-800"}`}>
@@ -83,7 +78,6 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
             </dl>
           </div>
 
-          {/* product information */}
           <div className="rounded-xl border border-brand-navy/10 bg-white px-6 py-5">
             <h2 className="font-display text-base font-semibold text-brand-navy">Product Information</h2>
             <ul className="mt-3 divide-y divide-brand-navy/8">
@@ -132,28 +126,17 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
             </dl>
           </div>
 
-          {/* delivery information */}
-          <div className="rounded-xl border border-brand-navy/10 bg-white px-6 py-5">
-            <h2 className="font-display text-base font-semibold text-brand-navy">Delivery Information</h2>
-            <dl className="mt-3 divide-y divide-brand-navy/8 font-ui text-sm">
-              <div className="flex items-start justify-between gap-6 py-3">
-                <dt className="shrink-0 text-brand-navy/50">Delivery Address</dt>
-                <dd className="text-right font-medium leading-relaxed text-brand-navy">
-                  Anaya Kapoor<br />
-                  14 Cornwallis Road, Vasant Enclave<br />
-                  New Delhi, 110057
-                </dd>
-              </div>
-              <div className="flex items-center justify-between py-3">
-                <dt className="text-brand-navy/50">Estimated Delivery</dt>
-                <dd className="font-medium text-brand-navy">10 September 2026</dd>
-              </div>
-              <div className="flex items-center justify-between py-3">
-                <dt className="text-brand-navy/50">Tracking</dt>
-                <dd className="font-medium text-brand-navy">Bluedart · BD48213771IN</dd>
-              </div>
-            </dl>
-          </div>
+          {order.city && (
+            <div className="rounded-xl border border-brand-navy/10 bg-white px-6 py-5">
+              <h2 className="font-display text-base font-semibold text-brand-navy">Delivery Information</h2>
+              <dl className="mt-3 divide-y divide-brand-navy/8 font-ui text-sm">
+                <div className="flex items-center justify-between py-3">
+                  <dt className="text-brand-navy/50">Delivery City</dt>
+                  <dd className="font-medium text-brand-navy">{order.city}</dd>
+                </div>
+              </dl>
+            </div>
+          )}
         </div>
 
         {/* timeline — view only, no status controls */}

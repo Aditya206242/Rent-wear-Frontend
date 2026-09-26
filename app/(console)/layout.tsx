@@ -14,7 +14,7 @@ export default async function ConsoleLayout({ children }: { children: ReactNode 
     <div className="min-h-screen bg-brand-cream">
       <a
         href="#console-main"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[200] focus:bg-brand-navy focus:px-4 focus:py-2 focus:font-ui focus:text-sm focus:text-white"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-200 focus:bg-brand-navy focus:px-4 focus:py-2 focus:font-ui focus:text-sm focus:text-white"
       >
         Skip to content
       </a>

@@ -146,20 +146,9 @@ export function ShopProvider({ children, isAuthenticated }: { children: ReactNod
     [router, pathname]
   );
 
-  // Bug fix (checkout showed "Cart is empty" even right after adding an
-  // item): this used to only update local React state + localStorage and
-  // never actually called the backend, for EITHER guests or signed-in
-  // users. That's fine for a guest (no backend cart exists for them yet —
-  // it gets merged in on sign-in, see the effect above), but for a
-  // signed-in user it meant the backend's real Cart row was never written
-  // to at all. The checkout page displays this same local `lines` state, so
-  // it looked fine right up until "Continue to payment" — which calls
-  // POST /checkout on the backend, and the backend reads its OWN persisted
-  // cart (not anything the client sends), found it empty, and rejected the
-  // order. Now this actually calls addCartItemAction for a signed-in user,
-  // same as removeLine already did for removals, and reconciles `lines`
-  // with whatever the backend confirms it saved rather than trusting the
-  // optimistic local guess.
+  // Checkout's POST /checkout reads the backend's own persisted cart, not
+  // anything the client sends — so a signed-in add must reach the backend
+  // here, and `lines` must reconcile to what it actually saved.
   const addLine = useCallback(
     (input: CartLine) => {
       setLines((prev) => {

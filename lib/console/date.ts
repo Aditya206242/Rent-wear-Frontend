@@ -1,10 +1,5 @@
-// Fixed reference point so the mock dataset stays internally consistent
-// regardless of when the console is viewed.
-export const TODAY = new Date("2026-09-13T12:00:00Z");
-
 export function daysUntil(dateStr: string): number {
-  const target = new Date(dateStr);
-  const ms = target.getTime() - TODAY.getTime();
+  const ms = new Date(dateStr).getTime() - Date.now();
   return Math.round(ms / (1000 * 60 * 60 * 24));
 }
 

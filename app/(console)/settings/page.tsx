@@ -1,3 +1,4 @@
+import { getSession } from "@/lib/auth/session";
 import { TextToggle } from "@/components/console/TextToggle";
 
 export const metadata = { title: "Settings — LoopWear Console" };
@@ -15,15 +16,17 @@ function Field({ label, defaultValue, type = "text" }: { label: string; defaultV
   );
 }
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  const user = await getSession();
+
   return (
     <div className="max-w-xl space-y-14 px-4 py-8 md:px-10">
       <section>
         <h2 className="font-display text-lg font-medium text-brand-navy">Operator profile</h2>
         <div className="mt-5 space-y-5">
-          <Field label="Name" defaultValue="Satya Prakash" />
-          <Field label="Email" defaultValue="barbadi072@gmail.com" type="email" />
-          <Field label="Home facility" defaultValue="Bengaluru Central" />
+          <Field label="Name" defaultValue={user?.name ?? ""} />
+          <Field label="Email" defaultValue={user?.email ?? ""} type="email" />
+          <Field label="Home facility" defaultValue="" />
         </div>
       </section>
 

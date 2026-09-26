@@ -1,12 +1,5 @@
 import type { DeliveryDetails } from "./types";
 
-/**
- * There's no backend endpoint for a saved address book (see
- * lib/shop/checkout-actions.ts — checkout only accepts delivery details
- * inline per order). This persists the last-used one locally, the same way
- * lib/shop/cart-context.tsx persists a guest cart, so checkout and the
- * account address page can both start from it.
- */
 const ADDRESS_KEY = "loopwear_delivery_address";
 
 export function readSavedAddress(): DeliveryDetails | null {

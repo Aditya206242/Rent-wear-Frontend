@@ -139,15 +139,6 @@ export const getProduct = cache(async (
   }
 });
 
-export async function getAvailability(
-  id: string,
-  size: string,
-  start: string,
-  end: string
-): Promise<ApiSizeAvailability> {
-  return apiFetch(`/products/${id}/availability`, { searchParams: { size, start, end } });
-}
-
 export async function listOccasionsWithCounts(): Promise<ApiOccasion[]> {
   const data = await apiFetch<{ items: ApiOccasion[] }>("/occasions");
   return arr(data.items);

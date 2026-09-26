@@ -60,14 +60,7 @@ function MenuOption({ label, active, onClick }: { label: string; active: boolean
   );
 }
 
-/**
- * Product grid for the /discover page. Filtering, sorting and the rent/buy
- * toggle all run client-side against `garments` — the real catalog, fetched
- * server-side by the page and passed in as a prop (see
- * app/(shop)/discover/page.tsx). Previously this rendered fixed dummy data
- * from lib/shop/mock-garments.ts regardless of what was actually in the
- * database — a product created in the admin panel would never appear here.
- */
+/** Filters, sorts, and renders the catalog passed in from app/(shop)/discover/page.tsx. */
 export function DiscoverPreviewGrid({ garments }: { garments: Garment[] }) {
   const [openMenu, setOpenMenu] = useState<OpenMenu>(null);
   const [category, setCategory] = useState<string | null>(null);

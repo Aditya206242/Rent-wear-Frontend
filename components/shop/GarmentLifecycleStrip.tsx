@@ -16,22 +16,15 @@ export function GarmentLifecycleStrip() {
         Every LoopWear piece is inspected and professionally cleaned between wears — here&apos;s this garment&apos;s journey.
       </p>
       <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-6">
-        {STAGES.map((stage, i) => {
+        {STAGES.map((stage) => {
           const Icon = stage.icon;
-          const isCurrent = i === 0;
           return (
             <div key={stage.label} className="flex flex-col items-start gap-2">
-              <span
-                className={`flex h-9 w-9 items-center justify-center rounded-full border-[1.5px] ${
-                  isCurrent ? "border-brand-cyan bg-brand-cyan/10" : "border-brand-navy/20"
-                }`}
-              >
-                <Icon size={16} strokeWidth={1.5} className={isCurrent ? "text-brand-cyan-deep" : "text-brand-navy/50"} />
+              <span className="flex h-9 w-9 items-center justify-center rounded-full border-[1.5px] border-brand-navy/20">
+                <Icon size={16} strokeWidth={1.5} className="text-brand-navy/50" />
               </span>
               <div>
-                <p className={`font-ui text-xs font-semibold uppercase tracking-wide ${isCurrent ? "text-brand-navy" : "text-brand-navy/50"}`}>
-                  {stage.label}
-                </p>
+                <p className="font-ui text-xs font-semibold uppercase tracking-wide text-brand-navy/50">{stage.label}</p>
                 <p className="mt-0.5 font-ui text-xs text-brand-navy/50">{stage.detail}</p>
               </div>
             </div>

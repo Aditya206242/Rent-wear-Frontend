@@ -76,10 +76,6 @@ export function OccasionShowcase({ occasions }: { occasions: ApiOccasion[] }) {
               style={{ backgroundImage: "url(https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?auto=format&fit=crop&w=1400&q=85)" }}
             />
             <div aria-hidden="true" className="absolute inset-0 bg-linear-to-r from-brand-navy-dark via-brand-navy-dark/75 to-brand-navy-dark/20" />
-            <div className="absolute right-5 top-5 z-10 bg-brand-cyan px-4 py-3 text-center text-brand-navy-dark shadow-[0_12px_28px_-12px_rgba(34,211,238,0.8)]">
-              <p className="font-ui text-3xl font-bold leading-none">20%</p>
-              <p className="mt-1 font-mono text-[9px] font-bold uppercase tracking-[0.14em]">off first order</p>
-            </div>
             <div className="relative">
               <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-cyan">Professional garment care</p>
               <p className="mt-2 font-ui text-3xl font-semibold leading-tight text-white">Fresh clothes. Zero effort.</p>
