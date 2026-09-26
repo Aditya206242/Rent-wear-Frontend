@@ -6,6 +6,7 @@ export type ApiErrorCode =
   | "conflict"
   | "rate_limited"
   | "validation_error"
+  | "bad_gateway"
   | "internal_error";
 
 /**
@@ -28,12 +29,23 @@ export class ApiError extends Error {
   }
 }
 
-/** Field errors from a `validation_error` response, shaped like zod's fieldErrors. */
+/**
+ * Field errors from a `validation_error` response. The backend sends zod's
+ * own `err.flatten()` shape — `{ formErrors: string[], fieldErrors: { [field]: string[] } }`
+ * — not a flat `{ field: string }` map. This previously iterated `details`'s
+ * top-level keys expecting string values there directly, so it always found
+ * `formErrors` (an array) and `fieldErrors` (an object) and returned `{}`:
+ * every backend-side validation failure silently fell back to a generic
+ * "Invalid request" message instead of pointing at the offending field.
+ */
 export function fieldErrorsFrom(error: unknown): Record<string, string> {
   if (error instanceof ApiError && error.code === "validation_error" && error.details && typeof error.details === "object") {
+    const details = error.details as { fieldErrors?: Record<string, string[]> };
     const out: Record<string, string> = {};
-    for (const [key, value] of Object.entries(error.details as Record<string, unknown>)) {
-      if (typeof value === "string") out[key] = value;
+    if (details.fieldErrors) {
+      for (const [key, messages] of Object.entries(details.fieldErrors)) {
+        if (messages?.[0]) out[key] = messages[0];
+      }
     }
     return out;
   }

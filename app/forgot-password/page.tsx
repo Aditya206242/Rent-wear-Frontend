@@ -1,5 +1,5 @@
 import { AuthCard } from "@/components/auth/AuthCard";
-import { AuthInput } from "@/components/auth/AuthInput";
+import { RequestResetForm } from "./RequestResetForm";
 
 export default function ForgotPasswordPage() {
   return (
@@ -12,23 +12,7 @@ export default function ForgotPasswordPage() {
         href: "/sign-in",
       }}
     >
-      <form className="space-y-4">
-        <AuthInput
-          label="Email address"
-          name="email"
-          type="email"
-          placeholder="Enter your email address"
-          autoComplete="email"
-          required
-        />
-
-        <button
-          type="submit"
-          className="flex w-full items-center justify-center rounded-lg bg-brand-navy px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-navy-dark"
-        >
-          Send reset link
-        </button>
-      </form>
+      <RequestResetForm />
     </AuthCard>
   );
 }

@@ -17,7 +17,8 @@ export type ApiGarmentUnit = {
   size: string;
   color: string;
   stage: LifecycleStage;
-  condition: Garment["condition"];
+  condition: string;
+  conditionLabel: Garment["condition"];
   lastMovedAt: string;
   timesRented: number;
   currentOrderId?: string | null;
