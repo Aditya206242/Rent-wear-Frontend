@@ -7,6 +7,9 @@ import { requireUser } from "@/lib/auth/session";
 
 export const metadata = { title: "My orders — LoopWear" };
 
+// Statuses an order never leaves (API codes, not display labels).
+const CLOSED_STATUSES = new Set(["closed", "cancelled", "payment_failed", "refunded"]);
+
 const TABS = [
   { key: "all", label: "All" },
   { key: "active", label: "Active" },
@@ -28,18 +31,19 @@ export default async function OrdersPage({
   const activeTab = TABS.find((t) => t.key === statusParam)?.key ?? "all";
 
   const orders = await listOrdersAction();
-  const activeCount = orders.filter((o) => o.status !== "closed").length;
-  const upcomingReturnsCount = orders.filter((o) => o.status === "with customer").length;
+  const isActive = (status: string) => !CLOSED_STATUSES.has(status);
+  const activeCount = orders.filter((o) => isActive(o.status)).length;
+  const upcomingReturnsCount = orders.filter((o) => o.status === "with_customer" && o.lines.some((l) => l.mode === "rent")).length;
   const completedCount = orders.filter((o) => o.status === "closed").length;
 
   const visible = orders
     .filter((order) => {
-      if (activeTab === "active") return order.status !== "closed";
-      if (activeTab === "processing") return order.status === "confirmed" || order.status === "packed";
+      if (activeTab === "active") return isActive(order.status);
+      if (activeTab === "processing") return order.status === "pending_payment" || order.status === "confirmed" || order.status === "packed";
       if (activeTab === "shipped") return order.status === "shipped";
-      if (activeTab === "delivered") return order.status === "with customer";
-      if (activeTab === "returned") return order.status === "return in transit" || order.status === "closed";
-      if (activeTab === "cancelled") return order.status === "cancelled";
+      if (activeTab === "delivered") return order.status === "with_customer";
+      if (activeTab === "returned") return order.status === "return_in_transit" || order.status === "closed";
+      if (activeTab === "cancelled") return order.status === "cancelled" || order.status === "payment_failed" || order.status === "refunded";
       return true;
     })
     .filter((order) => order.id.toLowerCase().includes(q.trim().toLowerCase()))
@@ -142,21 +146,38 @@ export default async function OrdersPage({
       ) : (
         <ul className="mt-6 space-y-3">
           {visible.map((order) => {
-            const withCustomer = order.status === "with customer";
+            const withCustomer = order.status === "with_customer";
             const closed = order.status === "closed";
             const processing = order.status === "packed" || order.status === "shipped";
+            const ended = order.status === "cancelled" || order.status === "payment_failed" || order.status === "refunded";
+            const awaitingPayment = order.status === "pending_payment";
+            const hasRentals = order.lines.some((l) => l.mode === "rent");
             const badgeClass = closed
               ? "bg-emerald-700/10 text-emerald-800"
-              : processing
-                ? "bg-amber-700/10 text-amber-800"
-                : "bg-brand-cyan/15 text-brand-cyan-deep";
-            const stateNote = withCustomer
-              ? "Currently with you — return due soon"
-              : closed
-                ? "Delivered and completed"
-                : processing
-                  ? "Being prepared for shipping"
-                  : "Payment received — preparing your order";
+              : ended
+                ? "bg-signal-danger/10 text-signal-danger"
+                : processing || awaitingPayment
+                  ? "bg-amber-700/10 text-amber-800"
+                  : "bg-brand-cyan/15 text-brand-cyan-deep";
+            const stateNote = awaitingPayment
+              ? order.isPayable
+                ? "Payment not completed — your items are reserved for a little while"
+                : "Payment not completed in time"
+              : ended
+                ? order.status === "refunded"
+                  ? "Cancelled and refunded"
+                  : "This order didn't go through"
+                : withCustomer
+                  ? hasRentals
+                    ? "Currently with you — return due soon"
+                    : "Delivered"
+                  : closed
+                    ? "Delivered and completed"
+                    : processing
+                      ? order.status === "shipped"
+                        ? "Out for delivery"
+                        : "Being prepared for shipping"
+                      : "Payment received — preparing your order";
             return (
               <li key={order.id} className="rounded-xl border border-brand-navy/10 bg-white p-4 sm:grid sm:grid-cols-[minmax(0,1fr)_13.75rem] sm:gap-5 sm:p-5">
                 <Link href={`/orders/${order.id}`} className="group flex items-center gap-4">
@@ -181,21 +202,25 @@ export default async function OrdersPage({
                       {order.city ? ` · ${order.city}` : ""}
                     </p>
                     <p className="mt-3 flex items-center gap-2 font-ui text-xs text-brand-navy/55">
-                      <span className={`h-1.5 w-1.5 rounded-full ${closed ? "bg-signal-success" : processing ? "bg-signal-warning" : "bg-brand-cyan-deep"}`} />
+                      <span className={`h-1.5 w-1.5 rounded-full ${closed ? "bg-signal-success" : ended ? "bg-signal-danger" : processing || awaitingPayment ? "bg-signal-warning" : "bg-brand-cyan-deep"}`} />
                       {stateNote}
                     </p>
                   </div>
 
                   <div className="flex shrink-0 items-center gap-3">
                     <p className="font-mono text-sm text-brand-navy/80">
-                      {formatMoney(order.pricing.display.total, order.pricing.displayCurrency)}
+                      {formatMoney(order.pricing.display.grandTotal, order.pricing.displayCurrency)}
                     </p>
                     <ArrowRight size={16} strokeWidth={1.75} className="text-brand-navy/30 transition-colors group-hover:text-brand-cyan-deep" />
                   </div>
                 </Link>
 
                 <div className="mt-4 flex flex-wrap gap-2 border-t border-brand-navy/8 pt-4 sm:mt-0 sm:flex-col sm:border-l sm:border-t-0 sm:pl-5 sm:pt-0">
-                  {withCustomer ? (
+                  {awaitingPayment && order.isPayable ? (
+                    <Link href={`/orders/${order.id}`} className="flex items-center justify-center rounded-lg bg-brand-navy px-3.5 py-2 font-ui text-xs font-semibold text-white hover:bg-brand-navy-dark">
+                      Complete payment
+                    </Link>
+                  ) : withCustomer && hasRentals ? (
                     <>
                       <Link href={`/orders/${order.id}`} className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-brand-navy px-3.5 py-2 font-ui text-xs font-semibold text-white transition-colors hover:bg-brand-navy-dark">
                         <Truck size={13} strokeWidth={1.75} /> Track Order

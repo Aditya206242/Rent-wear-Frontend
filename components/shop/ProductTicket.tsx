@@ -7,6 +7,7 @@ import { GarmentSwatch } from "./GarmentSwatch";
 import { RentBuyToggle } from "./RentBuyToggle";
 import { ProductQuickView } from "./ProductQuickView";
 import { useShopCart } from "@/lib/shop/cart-context";
+import { bagInputFor } from "@/lib/shop/bag-input";
 import type { Garment, RentOrBuy } from "@/lib/shop/types";
 
 export function ProductTicket({
@@ -81,18 +82,9 @@ export function ProductTicket({
             <>
               <button
                 type="button"
-                onClick={() =>
-                  addLine({
-                    garmentId: garment.id,
-                    mode: "rent",
-                    size: firstAvailableSize!,
-                    product: { id: garment.id, name: garment.name, brand: garment.brand, colorHex: garment.colorHex, imageUrls: garment.imageUrls, coverImageUrl: garment.coverImageUrl },
-                    currency: garment.currency,
-                    rentPrice: garment.rentPrice,
-                    deposit: garment.deposit,
-                    buyPrice: garment.buyPrice,
-                  })
-                }
+                // No colour chosen on a card: the backend picks the first
+                // colour that has this size in stock.
+                onClick={() => void addLine(bagInputFor(garment, { mode: "rent", size: firstAvailableSize! }))}
                 aria-label="Add rental to bag"
                 className="flex-1 rounded-md border border-brand-navy/20 py-1.5 font-ui text-xs font-semibold text-brand-navy transition-colors hover:bg-brand-cream"
               >
@@ -100,18 +92,7 @@ export function ProductTicket({
               </button>
               <button
                 type="button"
-                onClick={() =>
-                  buyNow({
-                    garmentId: garment.id,
-                    mode: "buy",
-                    size: firstAvailableSize!,
-                    product: { id: garment.id, name: garment.name, brand: garment.brand, colorHex: garment.colorHex, imageUrls: garment.imageUrls, coverImageUrl: garment.coverImageUrl },
-                    currency: garment.currency,
-                    rentPrice: garment.rentPrice,
-                    deposit: garment.deposit,
-                    buyPrice: garment.buyPrice,
-                  })
-                }
+                onClick={() => void buyNow(bagInputFor(garment, { mode: "buy", size: firstAvailableSize! }))}
                 aria-label={`Buy ${garment.name} now`}
                 className="flex-1 rounded-md bg-brand-navy py-1.5 font-ui text-xs font-semibold text-white transition-colors hover:bg-brand-navy-dark"
               >

@@ -4,27 +4,18 @@ import Link from "next/link";
 import { Plus, ShoppingBag } from "lucide-react";
 import { GarmentSwatch } from "./GarmentSwatch";
 import { useShopCart } from "@/lib/shop/cart-context";
+import { bagInputFor } from "@/lib/shop/bag-input";
 import { formatMoney } from "@/lib/shop/format";
 import type { Garment, Outfit } from "@/lib/shop/types";
 
 export function OutfitSpread({ outfit, garments }: { outfit: Outfit; garments: Garment[] }) {
   const { addLine } = useShopCart();
 
-  function addLook() {
+  async function addLook() {
+    // Sequential: each add returns the updated server cart.
     for (const g of garments) {
       const size = g.sizes.find((s) => s.available)?.size;
-      if (size) {
-        addLine({
-          garmentId: g.id,
-          mode: "rent",
-          size,
-          product: { id: g.id, name: g.name, brand: g.brand, colorHex: g.colorHex, imageUrls: g.imageUrls, coverImageUrl: g.coverImageUrl },
-          currency: g.currency,
-          rentPrice: g.rentPrice,
-          deposit: g.deposit,
-          buyPrice: g.buyPrice,
-        });
-      }
+      if (size) await addLine(bagInputFor(g, { mode: "rent", size }));
     }
   }
 

@@ -42,8 +42,7 @@ export function ShopHeader({ user }: { user: SessionUser | null }) {
   const [query, setQuery] = useState(searchParams.get("q") ?? "");
   const [cartOpen, setCartOpen] = useState(false);
   const [isLoggingOut, startLogout] = useTransition();
-  const { rentalCount, purchaseCount, wishlist, address, cartError } = useShopCart();
-  const totalBag = rentalCount + purchaseCount;
+  const { itemCount: totalBag, wishlist, defaultAddress, cartError } = useShopCart();
   const countryFlag = regionFlag(user?.country || DEFAULT_COUNTRY_CODE);
 
   useEffect(() => {
@@ -136,7 +135,7 @@ export function ShopHeader({ user }: { user: SessionUser | null }) {
         </div>
 
         <div className="mx-4 my-3 flex items-center justify-between gap-3 md:mx-20">
-          <HeaderChip href="/account/address" title={address ? `${address.addressLine1}, ${address.city}` : "Add a delivery address"}>
+          <HeaderChip href="/account/address" title={defaultAddress ? `${defaultAddress.line1}, ${defaultAddress.city}` : "Add a delivery address"}>
             <span aria-hidden="true" className="text-sm leading-none">{countryFlag}</span>
             <MapPin size={14} strokeWidth={1.5} />
             <span>Address</span>

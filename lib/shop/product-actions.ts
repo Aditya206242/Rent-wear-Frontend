@@ -1,17 +1,16 @@
 "use server";
 
 import { getProduct } from "./api";
-import type { SizeOption } from "./types";
+import type { Garment } from "./types";
 
 /**
- * The catalog LIST endpoint doesn't return per-size availability (see
+ * The catalog LIST endpoint doesn't return per-colour stock (see
  * lib/shop/api.ts's adaptProductSummary), so a Garment handed to a card from
- * the discover grid always has `sizes: []`. The quick-view modal opens
- * straight from that card data, so it needs this to fetch the real sizes
- * from the product DETAIL endpoint before a shopper can pick one and add to
- * the bag.
+ * the discover grid has `variantStock: []`. The quick-view modal opens
+ * straight from that card data, so it loads the full product detail before
+ * a shopper can pick a colour and size.
  */
-export async function fetchGarmentSizesAction(id: string): Promise<SizeOption[]> {
+export async function fetchGarmentDetailAction(id: string): Promise<Garment | null> {
   const result = await getProduct(id);
-  return result?.garment.sizes ?? [];
+  return result?.garment ?? null;
 }

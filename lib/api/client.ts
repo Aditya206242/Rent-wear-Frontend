@@ -25,6 +25,23 @@ function buildUrl(path: string, searchParams?: ApiFetchOptions["searchParams"]) 
   return url.toString();
 }
 
+/**
+ * Every call to the backend is made from this Next.js server, so without
+ * help the backend would see one IP for all shoppers (and its per-IP rate
+ * limits would lump them together). Forward the shopper's own IP; the
+ * backend only trusts it as far as its TRUST_PROXY setting allows.
+ */
+async function forwardedClientIp(): Promise<string | null> {
+  try {
+    const { headers } = await import("next/headers");
+    const h = await headers();
+    return h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || null;
+  } catch {
+    // Outside a request (build time, scripts) there's no shopper to forward.
+    return null;
+  }
+}
+
 function safeJsonParse(text: string): unknown {
   try {
     return JSON.parse(text);
@@ -47,6 +64,8 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
   if (token) headers.Authorization = `Bearer ${token}`;
   if (currency) headers["X-Currency"] = currency;
   if (idempotencyKey) headers["Idempotency-Key"] = idempotencyKey;
+  const clientIp = await forwardedClientIp();
+  if (clientIp) headers["X-Forwarded-For"] = clientIp;
 
   let response: Response;
   try {

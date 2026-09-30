@@ -11,6 +11,26 @@ export type SizeOption = {
 
 export type GarmentView = "front" | "back" | "fabric" | "model" | "detail";
 
+/** One colour of a product (the admin's ProductVariant) and the sizes it's offered in. */
+export type VariantOption = {
+  id: string;
+  color: string;
+  colorHex: string;
+  views: GarmentView[];
+  imageUrls: Partial<Record<GarmentView, string>>;
+  sizes: string[];
+};
+
+/** Live stock for one (colour, size) — only on the product detail response. */
+export type VariantSizeStock = {
+  variantId: string;
+  size: string;
+  /** Units free for the default rental window (from today). */
+  rentUnitsFree: number;
+  /** Units that can be bought right now. */
+  buyUnitsAvailable: number;
+};
+
 export type Garment = {
   id: string;
   name: string;
@@ -43,6 +63,11 @@ export type Garment = {
   /** Admin-uploaded fallback thumbnail — shown when the current color has no
    * photo of its own yet (see imageUrls above, which takes priority). */
   coverImageUrl: string | null;
+  /** Every active colour; the top-level color/imageUrls above are the first one. */
+  variants: VariantOption[];
+  defaultVariantId: string | null;
+  /** Per colour/size stock — empty on list items, filled on the product detail page. */
+  variantStock: VariantSizeStock[];
 };
 
 export type Outfit = {
@@ -58,40 +83,67 @@ export type Outfit = {
 
 export type RentOrBuy = "rent" | "buy";
 
-/** What a caller provides to add something to the bag — the context enriches this into a full CartLine. */
-export type AddCartLineInput = {
-  garmentId: string;
+/**
+ * What a caller provides to add something to the bag. Prices here are for
+ * display in a guest bag only — the backend never receives them and always
+ * charges its own current price.
+ */
+export type AddToBagInput = {
+  productId: string;
+  /** Omit for quick-add from a card: the backend picks the product's first colour with stock in this size. */
+  variantId?: string;
   mode: RentOrBuy;
   size: string;
+  quantity?: number;
   startDate?: string;
-};
-
-export type CartLine = AddCartLineInput & {
-  product?: {
-    id: string;
+  display: {
     name: string;
     brand: string;
+    color?: string;
     colorHex: string;
-    imageUrls?: Partial<Record<GarmentView, string>>;
-    coverImageUrl?: string | null;
+    imageUrl?: string | null;
+    currency: string;
+    unitPrice: number;
+    deposit: number;
   };
-  currency?: string;
-  rentPrice?: number;
-  deposit?: number;
-  buyPrice?: number;
 };
 
-/** Where an order should ship — collected at checkout and, once given, kept
- * locally so the next checkout (and the account address page) starts from it. */
-export type DeliveryDetails = {
-  fullName: string;
-  email: string;
-  phone: string;
-  addressLine1: string;
-  addressLine2?: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  country: string;
-  deliveryNote?: string;
+export type LineStatus = "ok" | "warning" | "blocked";
+
+/** One line of the bag, the same shape whether it came from the server cart or the guest bag. */
+export type BagLine = {
+  /** Server cart-item id, or a local key for a guest line. */
+  id: string;
+  productId: string;
+  variantId?: string;
+  mode: RentOrBuy;
+  size: string;
+  quantity: number;
+  startDate?: string | null;
+  name: string;
+  brand: string;
+  color?: string;
+  colorHex: string;
+  imageUrl?: string | null;
+  currency: string;
+  unitPrice: number;
+  deposit: number;
+  lineTotal: number;
+  status: LineStatus;
+  issues: { code: string; message: string; blocking: boolean }[];
+  /** How many can be chosen right now (stock and the per-line limit). */
+  maxQuantity: number;
+  guest: boolean;
+};
+
+export type BagSummary = {
+  currency: string;
+  rentSubtotal: number;
+  buySubtotal: number;
+  subtotal: number;
+  discount: number;
+  depositTotal: number;
+  /** Before delivery, which is chosen at checkout. */
+  total: number;
+  grandTotal: number;
 };

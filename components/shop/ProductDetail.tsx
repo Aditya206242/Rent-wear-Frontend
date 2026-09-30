@@ -2,46 +2,70 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Heart, ShoppingBag, Star } from "lucide-react";
+import { Heart, ShoppingBag, Star, Zap } from "lucide-react";
 import { ImageFilmstrip } from "./ImageFilmstrip";
 import { RentBuyToggle } from "./RentBuyToggle";
 import { SizeSelector } from "./SizeSelector";
+import { VariantPicker } from "./VariantPicker";
+import { QuantityStepper } from "./QuantityStepper";
 import { AvailabilityPicker } from "./AvailabilityPicker";
 import { GarmentLifecycleStrip } from "./GarmentLifecycleStrip";
 import { GarmentSwatch } from "./GarmentSwatch";
 import { useShopCart } from "@/lib/shop/cart-context";
+import { useVariantSelection } from "@/lib/shop/use-variant-selection";
+import { bagInputFor } from "@/lib/shop/bag-input";
 import { formatMoney } from "@/lib/shop/format";
 import type { Garment, RentOrBuy } from "@/lib/shop/types";
 
 export function ProductDetail({ garment, similar }: { garment: Garment; similar: Garment[] }) {
   const [mode, setMode] = useState<RentOrBuy>("rent");
-  const [size, setSize] = useState<string | null>(garment.sizes.find((s) => s.available)?.size ?? null);
+  const {
+    variantId,
+    setVariantId,
+    variant,
+    sizes,
+    activeSize,
+    setSize,
+    units,
+    maxQuantity,
+    quantity: activeQuantity,
+    setQuantity,
+    soldOutVariantIds,
+  } = useVariantSelection(garment, mode);
   const [startDate, setStartDate] = useState("");
-  const [added, setAdded] = useState(false);
-  const { addLine, toggleWishlist, isWishlisted } = useShopCart();
+  const [status, setStatus] = useState<"idle" | "adding" | "added">("idle");
+  const { addLine, buyNow, toggleWishlist, isWishlisted, cartError } = useShopCart();
   const wishlisted = isWishlisted(garment.id);
 
-  function handleAdd() {
-    if (!size) return;
-    addLine({
-      garmentId: garment.id,
-      mode,
-      size,
-      startDate: mode === "rent" ? startDate || undefined : undefined,
-      product: { id: garment.id, name: garment.name, brand: garment.brand, colorHex: garment.colorHex, imageUrls: garment.imageUrls, coverImageUrl: garment.coverImageUrl },
-      currency: garment.currency,
-      rentPrice: garment.rentPrice,
-      deposit: garment.deposit,
-      buyPrice: garment.buyPrice,
-    });
-    setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
+  const canAdd = !!activeSize && status !== "adding";
+  const input = () => bagInputFor(garment, { mode, size: activeSize!, variantId: variantId ?? undefined, quantity: activeQuantity, startDate });
+
+  async function handleAdd() {
+    if (!canAdd) return;
+    setStatus("adding");
+    const ok = await addLine(input());
+    setStatus(ok ? "added" : "idle");
+    if (ok) setTimeout(() => setStatus("idle"), 2000);
+  }
+
+  async function handleBuyNow() {
+    if (!canAdd) return;
+    setStatus("adding");
+    await buyNow(input());
+    setStatus("idle");
   }
 
   return (
     <div>
       <div className="grid grid-cols-1 gap-8 px-4 py-8 md:px-10 lg:grid-cols-2 lg:gap-12">
-        <ImageFilmstrip colorHex={garment.colorHex} name={garment.name} views={garment.views} imageUrls={garment.imageUrls} coverImageUrl={garment.coverImageUrl} />
+        <ImageFilmstrip
+          key={variantId ?? "default"}
+          colorHex={variant?.colorHex ?? garment.colorHex}
+          name={garment.name}
+          views={variant?.views ?? garment.views}
+          imageUrls={variant?.imageUrls ?? garment.imageUrls}
+          coverImageUrl={garment.coverImageUrl}
+        />
 
         <div className="max-w-lg">
           <div className="flex items-start justify-between gap-3">
@@ -49,7 +73,7 @@ export function ProductDetail({ garment, similar }: { garment: Garment; similar:
               <p className="font-mono text-xs uppercase tracking-wide text-brand-navy/40">{garment.brand}</p>
               <h1 className="mt-1 font-ui text-3xl font-medium text-brand-navy">{garment.name}</h1>
               <p className="mt-1 font-ui text-sm text-brand-navy/55">
-                {garment.category} · {garment.color}
+                {garment.category} · {variant?.color ?? garment.color}
               </p>
             </div>
             <button
@@ -79,11 +103,32 @@ export function ProductDetail({ garment, similar }: { garment: Garment; similar:
             )}
           </div>
 
+          {garment.variants.length > 1 && (
+            <div className="mt-6">
+              <p className="font-ui text-xs font-semibold uppercase tracking-wide text-brand-navy/50">
+                Colour <span className="ml-1 font-normal normal-case tracking-normal text-brand-navy/70">{variant?.color}</span>
+              </p>
+              <div className="mt-2">
+                <VariantPicker variants={garment.variants} selectedId={variantId} onSelect={setVariantId} soldOutIds={soldOutVariantIds} />
+              </div>
+            </div>
+          )}
+
           <div className="mt-6">
             <p className="font-ui text-xs font-semibold uppercase tracking-wide text-brand-navy/50">Size</p>
             <div className="mt-2">
-              <SizeSelector sizes={garment.sizes} selected={size} onSelect={setSize} />
+              {sizes.length === 0 ? (
+                <p className="font-ui text-xs text-brand-navy/45">This colour isn&apos;t offered in any size right now.</p>
+              ) : (
+                <SizeSelector sizes={sizes} selected={activeSize} onSelect={setSize} />
+              )}
             </div>
+            {activeSize && units !== null && units > 0 && units <= 2 && (
+              <p className="mt-2 font-ui text-xs font-medium text-signal-warning">Only {units} left in {activeSize}</p>
+            )}
+            {sizes.length > 0 && !activeSize && (
+              <p className="mt-2 font-ui text-xs text-signal-danger">Out of stock in this colour{mode === "buy" ? " to buy" : " for rent"}.</p>
+            )}
           </div>
 
           {mode === "rent" && (
@@ -99,15 +144,32 @@ export function ProductDetail({ garment, similar }: { garment: Garment; similar:
             </div>
           )}
 
+          <div className="mt-6 flex items-center gap-3">
+            <QuantityStepper value={activeQuantity} max={maxQuantity} onChange={setQuantity} disabled={!activeSize} />
+            <button
+              type="button"
+              onClick={handleAdd}
+              disabled={!canAdd}
+              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-brand-navy py-3 font-ui text-sm font-semibold text-white transition-colors hover:bg-brand-navy-dark disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <ShoppingBag size={16} strokeWidth={1.75} />
+              {status === "adding" ? "Adding…" : status === "added" ? "Added to bag" : mode === "rent" ? "Add rental to bag" : "Add to bag"}
+            </button>
+          </div>
           <button
             type="button"
-            onClick={handleAdd}
-            disabled={!size}
-            className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-brand-navy py-3.5 font-ui text-sm font-semibold text-white transition-colors hover:bg-brand-navy-dark disabled:cursor-not-allowed disabled:opacity-40"
+            onClick={handleBuyNow}
+            disabled={!canAdd}
+            className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-lg border border-brand-navy/25 py-3 font-ui text-sm font-semibold text-brand-navy transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
           >
-            <ShoppingBag size={16} strokeWidth={1.75} />
-            {added ? "Added to bag" : mode === "rent" ? "Add rental to bag" : "Add to bag"}
+            <Zap size={15} strokeWidth={1.75} />
+            {mode === "rent" ? "Rent now" : "Buy now"}
           </button>
+          {cartError && status === "idle" && (
+            <p role="alert" className="mt-2 font-ui text-xs text-signal-danger">
+              {cartError}
+            </p>
+          )}
 
           <p className="mt-3 font-ui text-xs text-brand-navy/50">{garment.conditionCopy}</p>
 

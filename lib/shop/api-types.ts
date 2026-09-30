@@ -49,8 +49,16 @@ export type ApiSizeAvailability = {
   unitsFree: number;
 };
 
+export type ApiVariantStock = {
+  variantId: string;
+  size: string;
+  rentUnitsFree: number;
+  buyUnitsAvailable: number;
+};
+
 export type ApiProductDetail = ApiProduct & {
   sizes: ApiSizeAvailability[];
+  variantStock?: ApiVariantStock[];
   similar: ApiProduct[];
 };
 

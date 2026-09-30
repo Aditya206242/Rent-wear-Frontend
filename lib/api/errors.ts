@@ -7,7 +7,25 @@ export type ApiErrorCode =
   | "rate_limited"
   | "validation_error"
   | "bad_gateway"
-  | "internal_error";
+  | "internal_error"
+  | "gone"
+  | "unprocessable"
+  | "cart_empty"
+  | "cart_invalid"
+  | "product_unavailable"
+  | "variant_unavailable"
+  | "out_of_stock"
+  | "quantity_limit"
+  | "rental_date_invalid"
+  | "price_changed"
+  | "coupon_invalid"
+  | "address_invalid"
+  | "delivery_unavailable"
+  | "order_expired"
+  | "order_not_payable"
+  | "idempotency_conflict"
+  | "payment_verification_failed"
+  | "payment_processing";
 
 /**
  * Thrown by apiFetch for every non-2xx response, and for network failures

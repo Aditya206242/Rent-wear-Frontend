@@ -2,11 +2,18 @@
 
 import { useEffect, useRef, useState } from "react";
 import Script from "next/script";
-import type { ApiCheckoutOrder } from "@/lib/shop/checkout-actions";
+
+type RazorpaySuccess = { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string };
+export type RazorpayFailure = { code?: string; description?: string; reason?: string; paymentId?: string };
+
+type RazorpayInstance = {
+  open: () => void;
+  on: (event: "payment.failed", handler: (response: { error: { code?: string; description?: string; reason?: string; metadata?: { payment_id?: string } } }) => void) => void;
+};
 
 declare global {
   interface Window {
-    Razorpay?: new (options: RazorpayOptions) => { open: () => void };
+    Razorpay?: new (options: RazorpayOptions) => RazorpayInstance;
   }
 }
 
@@ -19,55 +26,61 @@ type RazorpayOptions = {
   description: string;
   prefill: { name?: string; email?: string; contact?: string };
   theme: { color: string };
-  handler: (response: {
-    razorpay_order_id: string;
-    razorpay_payment_id: string;
-    razorpay_signature: string;
-  }) => void;
-  modal: { ondismiss: () => void };
+  retry: { enabled: boolean };
+  handler: (response: RazorpaySuccess) => void;
+  modal: { ondismiss: () => void; confirm_close: boolean };
 };
 
+/**
+ * Opens Razorpay Checkout for a payment session the backend created. The
+ * amount and Razorpay order come from the backend; nothing here decides
+ * what's charged. A failed attempt (`payment.failed`) keeps the modal open
+ * so the customer can try another method; `onDismiss` fires when they close
+ * it. Success only hands the signed response to the caller to verify
+ * server-side — it is not proof of payment on its own.
+ */
 export function RazorpayCheckout({
-  order,
-  payment,
-  customer,
+  session,
+  orderLabel,
   onPaid,
-  onCancel,
+  onFailedAttempt,
+  onDismiss,
   onError,
 }: {
-  order: ApiCheckoutOrder;
-  payment: { razorpayOrderId: string; razorpayKeyId: string; amount: number; currency: string };
-  customer: { name: string; email: string; phone: string };
-  onPaid: (response: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) => void;
-  onCancel: () => void;
+  session: { razorpayOrderId: string; keyId: string; amount: number; currency: string; prefill: { name: string; email: string; contact: string } };
+  orderLabel: string;
+  onPaid: (response: RazorpaySuccess) => void;
+  onFailedAttempt: (failure: RazorpayFailure) => void;
+  onDismiss: () => void;
   onError: (message: string) => void;
 }) {
-  const [scriptReady, setScriptReady] = useState(false);
+  const [scriptReady, setScriptReady] = useState(typeof window !== "undefined" && !!window.Razorpay);
   const opened = useRef(false);
 
-  // Opens automatically the moment the script is ready — the customer
-  // already committed by clicking "Place order"; this widget IS that step,
-  // not a second button to click.
   useEffect(() => {
     if (!scriptReady || opened.current) return;
     if (!window.Razorpay) {
-      onError("Razorpay's checkout script didn't load. Check your connection and try again.");
+      onError("Razorpay's checkout didn't load. Check your connection and try again.");
       return;
     }
     opened.current = true;
 
     const rzp = new window.Razorpay({
-      key: payment.razorpayKeyId,
-      amount: payment.amount,
-      currency: payment.currency,
-      order_id: payment.razorpayOrderId,
+      key: session.keyId,
+      amount: session.amount,
+      currency: session.currency,
+      order_id: session.razorpayOrderId,
       name: "LoopWear",
-      description: `Order ${order.id}`,
-      prefill: { name: customer.name, email: customer.email, contact: customer.phone },
+      description: orderLabel,
+      prefill: { name: session.prefill.name, email: session.prefill.email, contact: session.prefill.contact },
       theme: { color: "#172b4d" },
+      retry: { enabled: true },
       handler: onPaid,
-      modal: { ondismiss: onCancel },
+      modal: { ondismiss: onDismiss, confirm_close: true },
     });
+    rzp.on("payment.failed", ({ error }) =>
+      onFailedAttempt({ code: error?.code, description: error?.description, reason: error?.reason, paymentId: error?.metadata?.payment_id })
+    );
     rzp.open();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scriptReady]);

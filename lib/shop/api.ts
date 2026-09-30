@@ -79,6 +79,9 @@ function adaptProductSummary(api: ApiProduct): Garment {
     views: arr(api.views),
     imageUrls: api.imageUrls ?? {},
     coverImageUrl: api.coverImageUrl ?? null,
+    variants: arr(api.variants).map((v) => ({ ...v, views: arr(v.views), imageUrls: v.imageUrls ?? {}, sizes: arr(v.sizes) })),
+    defaultVariantId: arr(api.variants)[0]?.id ?? null,
+    variantStock: [],
   };
 }
 
@@ -89,6 +92,7 @@ function adaptProductDetail(api: ApiProductDetail): Garment {
     ...adaptProductSummary(api),
     sizes,
     availability: computeAvailability(apiSizes),
+    variantStock: arr(api.variantStock),
   };
 }
 
@@ -161,5 +165,17 @@ export async function getOutfit(id: string, currency?: string): Promise<{ outfit
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) return null;
     throw error;
+  }
+}
+
+export type ApiCategory = { id: string; name: string; slug: string; productCount: number };
+
+/** The same category table the admin manages — never a hardcoded list. */
+export async function listCategories(): Promise<ApiCategory[]> {
+  try {
+    const data = await apiFetch<{ items: ApiCategory[] }>("/categories", { next: { revalidate: 300 } });
+    return arr(data.items);
+  } catch {
+    return [];
   }
 }
